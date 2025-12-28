@@ -49,6 +49,13 @@
     - when test code contains if-else statement due to parametrization. ([Khorikov, 2020, Section 3.1.3](#references))
     - when parametrization may mix both normal and invalid cases. ([Khorikov, 2020, Section 3.5](#references))
 
+## Task runner guidelines
+
+- Use [Taskfile](https://taskfile.dev/) to automate common tasks such as
+  - setting up the development environment,
+  - running tests, and
+  - deploying the application, and so on.
+
 ## References
 
 - [Khorikov, V. (2020), Unit Testing Principles, Practices, and Patterns: Effective testing styles, patterns, and reliable automation for unit testing, mocking, and integration testing with examples in C#. Manning.](https://www.notion.so/datalabs-jp/Unit-Testing-Principles-Practices-and-Patterns-Effective-testing-styles-patterns-and-reliable-a-c32c418bff7147d1b5d39dbaa8d48b5b)  

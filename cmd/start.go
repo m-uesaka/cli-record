@@ -5,11 +5,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/google/uuid"
 	"github.com/m-uesaka/cli-record/internal/models"
 	"github.com/m-uesaka/cli-record/internal/storage"
+	"github.com/m-uesaka/cli-record/internal/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -122,117 +122,41 @@ func parseTags(tagStr string) []string {
 	return tags
 }
 
-type promptModel struct {
-	taskInput textinput.Model
-	tagsInput textinput.Model
-	focusIndex int
-	existingTags []string
-	err error
-}
-
-func initialPromptModel(taskName string, tags []string, existingTags []string) promptModel {
-	ti := textinput.New()
-	ti.Placeholder = "Task name (optional, can be set when stopping)"
-	ti.Focus()
-	ti.CharLimit = 200
-	ti.Width = 50
-	if taskName != "" {
-		ti.SetValue(taskName)
-	}
-
-	tagsInput := textinput.New()
-	tagsInput.Placeholder = "Tags (comma-separated, optional)"
-	tagsInput.CharLimit = 200
-	tagsInput.Width = 50
-	if len(tags) > 0 {
-		tagsInput.SetValue(strings.Join(tags, ", "))
-	}
-
-	return promptModel{
-		taskInput: ti,
-		tagsInput: tagsInput,
-		focusIndex: 0,
-		existingTags: existingTags,
-	}
-}
-
-func (m promptModel) Init() tea.Cmd {
-	return textinput.Blink
-}
-
-func (m promptModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+c", "esc":
-			return m, tea.Quit
-
-		case "enter":
-			return m, tea.Quit
-
-		case "tab", "shift+tab", "up", "down":
-			if msg.String() == "up" || msg.String() == "shift+tab" {
-				m.focusIndex--
-			} else {
-				m.focusIndex++
-			}
-
-			if m.focusIndex > 1 {
-				m.focusIndex = 0
-			} else if m.focusIndex < 0 {
-				m.focusIndex = 1
-			}
-
-			if m.focusIndex == 0 {
-				m.taskInput.Focus()
-				m.tagsInput.Blur()
-			} else {
-				m.taskInput.Blur()
-				m.tagsInput.Focus()
-			}
-
-			return m, nil
-		}
-	}
-
-	var cmd tea.Cmd
-	if m.focusIndex == 0 {
-		m.taskInput, cmd = m.taskInput.Update(msg)
-	} else {
-		m.tagsInput, cmd = m.tagsInput.Update(msg)
-	}
-
-	return m, cmd
-}
-
-func (m promptModel) View() string {
-	var b strings.Builder
-
-	b.WriteString("Start Time Entry\n\n")
-	b.WriteString(m.taskInput.View())
-	b.WriteString("\n\n")
-	b.WriteString(m.tagsInput.View())
-	b.WriteString("\n\n")
-
-	if len(m.existingTags) > 0 {
-		b.WriteString(fmt.Sprintf("Existing tags: %s\n\n", strings.Join(m.existingTags, ", ")))
-	}
-
-	b.WriteString("Press Enter to start • Tab to switch fields • Esc to cancel")
-
-	return b.String()
-}
-
 func runPrompt(taskName string, tags []string, existingTags []string) (string, []string, error) {
-	p := tea.NewProgram(initialPromptModel(taskName, tags, existingTags))
+	// Use the new reusable form component
+	fields := []tui.InputFormField{
+		{
+			Label:       "Task Name:",
+			Placeholder: "Task name (optional, can be set when stopping)",
+			Value:       taskName,
+		},
+		{
+			Label:       "Tags:",
+			Placeholder: "Comma-separated tags (optional)",
+			Value:       strings.Join(tags, ", "),
+		},
+	}
+
+	form := tui.NewInputForm("Start Time Entry", fields)
+	if len(existingTags) > 0 {
+		form.HelpText = fmt.Sprintf("Existing tags: %s\n\n%s", 
+			strings.Join(existingTags, ", "), form.HelpText)
+	}
+
+	p := tea.NewProgram(form)
 	m, err := p.Run()
 	if err != nil {
 		return "", nil, fmt.Errorf("error running prompt: %w", err)
 	}
 
-	model := m.(promptModel)
-	resultTaskName := strings.TrimSpace(model.taskInput.Value())
-	resultTags := parseTags(model.tagsInput.Value())
+	model := m.(tui.InputFormModel)
+	if model.Cancelled {
+		return "", nil, fmt.Errorf("cancelled by user")
+	}
+
+	values := model.GetValues()
+	resultTaskName := values[0]
+	resultTags := parseTags(values[1])
 
 	return resultTaskName, resultTags, nil
 }

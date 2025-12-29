@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/m-uesaka/cli-record/internal/storage"
+	"github.com/m-uesaka/cli-record/internal/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -69,63 +69,30 @@ func runStop(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-type taskNameModel struct {
-	input textinput.Model
-}
-
-func initialTaskNameModel() taskNameModel {
-	ti := textinput.New()
-	ti.Placeholder = "Enter task name"
-	ti.Focus()
-	ti.CharLimit = 200
-	ti.Width = 50
-
-	return taskNameModel{
-		input: ti,
-	}
-}
-
-func (m taskNameModel) Init() tea.Cmd {
-	return textinput.Blink
-}
-
-func (m taskNameModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+c", "esc":
-			return m, tea.Quit
-		case "enter":
-			return m, tea.Quit
-		}
-	}
-
-	var cmd tea.Cmd
-	m.input, cmd = m.input.Update(msg)
-	return m, cmd
-}
-
-func (m taskNameModel) View() string {
-	var b strings.Builder
-
-	b.WriteString("Task Name Required\n\n")
-	b.WriteString("The task name was not provided when starting.\n")
-	b.WriteString("Please enter it now:\n\n")
-	b.WriteString(m.input.View())
-	b.WriteString("\n\nPress Enter to confirm • Esc to cancel")
-
-	return b.String()
-}
-
 func promptTaskName() (string, error) {
-	p := tea.NewProgram(initialTaskNameModel())
+	fields := []tui.InputFormField{
+		{
+			Label:       "Task Name:",
+			Placeholder: "Enter task name",
+		},
+	}
+
+	form := tui.NewInputForm("Task Name Required", fields)
+	form.HelpText = "The task name was not provided when starting.\nPlease enter it now.\n\n" + form.HelpText
+
+	p := tea.NewProgram(form)
 	m, err := p.Run()
 	if err != nil {
 		return "", fmt.Errorf("error running prompt: %w", err)
 	}
 
-	model := m.(taskNameModel)
-	taskName := strings.TrimSpace(model.input.Value())
+	model := m.(tui.InputFormModel)
+	if model.Cancelled {
+		return "", fmt.Errorf("cancelled by user")
+	}
+
+	values := model.GetValues()
+	taskName := values[0]
 
 	if taskName == "" {
 		return "", fmt.Errorf("task name is required")

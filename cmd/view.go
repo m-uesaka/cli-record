@@ -52,6 +52,48 @@ func init() {
 }
 
 func runView(cmd *cobra.Command, args []string) error {
+	// Validate date formats
+	if err := ValidateDateFormat(viewFrom); err != nil {
+		return err
+	}
+	if err := ValidateDateFormat(viewTo); err != nil {
+		return err
+	}
+
+	// Validate format
+	validFormats := []string{"table", "csv", "json"}
+	isValidFormat := false
+	for _, f := range validFormats {
+		if viewFormat == f {
+			isValidFormat = true
+			break
+		}
+	}
+	if !isValidFormat {
+		return NewErrorWithSuggestion(
+			fmt.Errorf("invalid format: %s", viewFormat),
+			fmt.Sprintf("Valid formats are: %s", strings.Join(validFormats, ", ")),
+		)
+	}
+
+	// Validate groupBy
+	if viewBy != "" {
+		validGroupBy := []string{"task", "tag", "day", "week", "month", "year"}
+		isValid := false
+		for _, g := range validGroupBy {
+			if viewBy == g {
+				isValid = true
+				break
+			}
+		}
+		if !isValid {
+			return NewErrorWithSuggestion(
+				fmt.Errorf("invalid --by value: %s", viewBy),
+				fmt.Sprintf("Valid values are: %s", strings.Join(validGroupBy, ", ")),
+			)
+		}
+	}
+
 	store, err := storage.NewJSONStorage()
 	if err != nil {
 		return fmt.Errorf("failed to initialize storage: %w", err)

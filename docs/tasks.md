@@ -208,32 +208,32 @@ This document outlines the detailed tasks for implementing the CLI time-tracking
 
 ### Task 5.1: Comprehensive Testing
 
-- [ ] Write unit tests for all packages
-  - [ ] Models package tests
-  - [ ] Storage package tests
-  - [ ] Command handlers tests
-  - [ ] Utility functions tests
-- [ ] Write integration tests
-  - [ ] Test full workflows (start -> stop -> list)
-  - [ ] Test data persistence across commands
-  - [ ] Test edge cases and error conditions
-- [ ] Set up test coverage reporting
-  - [ ] Configure coverage tools
-  - [ ] Aim for >80% coverage
+- [x] Write unit tests for all packages
+  - [x] Models package tests
+  - [x] Storage package tests
+  - [x] Command handlers tests
+  - [x] Utility functions tests
+- [x] Write integration tests
+  - [x] Test full workflows (start -> stop -> list)
+  - [x] Test data persistence across commands
+  - [x] Test edge cases and error conditions
+- [x] Set up test coverage reporting
+  - [x] Configure coverage tools
+  - [x] Aim for >80% coverage (achieved for models and storage)
 
 ### Task 5.2: Documentation
 
-- [ ] Update README.md
-  - [ ] Add installation instructions
-  - [ ] Add usage examples for all commands
-  - [ ] Add screenshots or demos if possible
-- [ ] Create user guide
-  - [ ] Document common workflows
-  - [ ] Provide tips and best practices
-- [ ] Add inline code documentation
-  - [ ] Document all public functions and types
-  - [ ] Add package-level documentation
-- [ ] Create contributing guide if open-sourcing
+- [x] Update README.md
+  - [x] Add installation instructions
+  - [x] Add usage examples for all commands
+  - [x] Add screenshots or demos if possible
+- [x] Create user guide
+  - [x] Document common workflows
+  - [x] Provide tips and best practices
+- [x] Add inline code documentation
+  - [x] Document all public functions and types
+  - [x] Add package-level documentation
+- [x] Create contributing guide if open-sourcing
 
 ## Phase 6: Build and Deployment
 

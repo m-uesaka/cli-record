@@ -7,6 +7,9 @@ This document provides a comprehensive reference for all available commands and 
 - [Global Options](#global-options)
 - [start](#start)
 - [stop](#stop)
+- [status](#status)
+- [edit](#edit)
+- [remove](#remove)
 - [list](#list)
 - [show](#show)
 - [view](#view)
@@ -113,6 +116,204 @@ cli-record stop
 ### Aliases
 
 - `sp`
+
+## status
+
+Show the current time tracking status.
+
+### Usage
+
+```bash
+cli-record status
+```
+
+### Description
+
+Displays the current time tracking status. If a time entry is running, shows detailed information about it. If no entry is running, displays an appropriate message.
+
+### Flags
+
+This command has no additional flags.
+
+### Examples
+
+```bash
+# Check current status
+cli-record status
+```
+
+### Output Format
+
+When a time entry is running:
+```
+⏱️  Currently tracking time
+
+Task:     Write documentation
+Started:  2025-12-29 14:30:00 (2h 15m ago)
+Duration: 2h 15m 30s
+Tags:     docs, writing
+```
+
+When no entry is running:
+```
+⏸️  No time entry is currently running
+
+Use 'cli-record start' to begin tracking time.
+```
+
+### Aliases
+
+This command has no aliases.
+
+## edit
+
+Edit an existing time entry.
+
+### Usage
+
+```bash
+cli-record edit <ID> [flags]
+```
+
+### Description
+
+Allows you to modify an existing time entry's details, including start time, end time, task name, and tags. The command presents an interactive form with the current values pre-filled.
+
+### Arguments
+
+- `ID` (required): The unique identifier of the time entry to edit
+  - Can be found using the `list` command
+  - Example: `cli-record edit 550e8400-e29b-41d4-a716-446655440000`
+
+### Flags
+
+- `--task`, `-t` (string, optional): New task name
+  - Example: `--task "Updated task name"`
+
+- `--tags` (string, optional): New tags (comma-separated)
+  - Example: `--tags "development,refactoring"`
+
+- `--start` (string, optional): New start time
+  - Format: `YYYY-MM-DD HH:MM:SS`
+  - Example: `--start "2025-12-29 14:00:00"`
+
+- `--end` (string, optional): New end time
+  - Format: `YYYY-MM-DD HH:MM:SS`
+  - Example: `--end "2025-12-29 16:30:00"`
+
+- `--interactive`, `-i` (boolean): Use interactive mode (default)
+  - Opens a TUI form with current values
+  - Example: `--interactive`
+
+### Examples
+
+```bash
+# Edit using interactive mode (default)
+cli-record edit 550e8400-e29b-41d4-a716-446655440000
+
+# Edit with command-line flags
+cli-record edit 550e8400-e29b-41d4-a716-446655440000 --task "New task name"
+
+# Update start and end times
+cli-record edit 550e8400-e29b-41d4-a716-446655440000 \
+  --start "2025-12-29 09:00:00" \
+  --end "2025-12-29 17:00:00"
+
+# Update tags only
+cli-record edit 550e8400-e29b-41d4-a716-446655440000 --tags "important,urgent"
+
+# Update multiple fields
+cli-record edit 550e8400-e29b-41d4-a716-446655440000 \
+  --task "Refactored feature" \
+  --tags "development,refactoring" \
+  --end "2025-12-29 18:00:00"
+```
+
+### Validation
+
+- End time must be after start time
+- Start and end times must be valid date/time formats
+- Changes are validated before saving
+
+### Interactive Mode
+
+When using interactive mode (default or `--interactive`):
+1. Shows a form with current values pre-filled
+2. Use Tab to switch between fields
+3. Press Enter to save changes
+4. Press Esc to cancel
+
+### Aliases
+
+This command has no aliases.
+
+## remove
+
+Remove a time entry.
+
+### Usage
+
+```bash
+cli-record remove <ID> [flags]
+```
+
+### Description
+
+Permanently deletes a time entry from the database. By default, prompts for confirmation before deletion to prevent accidental data loss.
+
+### Arguments
+
+- `ID` (required): The unique identifier of the time entry to remove
+  - Can be found using the `list` command
+  - Example: `cli-record remove 550e8400-e29b-41d4-a716-446655440000`
+
+### Flags
+
+- `--force`, `-f` (boolean): Skip confirmation prompt
+  - Example: `--force`
+
+### Examples
+
+```bash
+# Remove with confirmation prompt (default)
+cli-record remove 550e8400-e29b-41d4-a716-446655440000
+
+# Remove without confirmation
+cli-record remove 550e8400-e29b-41d4-a716-446655440000 --force
+
+# Using alias
+cli-record rm 550e8400-e29b-41d4-a716-446655440000
+```
+
+### Confirmation Prompt
+
+When not using `--force`, displays:
+```
+Are you sure you want to remove this entry?
+
+Task:     Write documentation
+Started:  2025-12-29 14:30:00
+Duration: 2h 15m 30s
+Tags:     docs, writing
+
+This action cannot be undone.
+
+[ Yes ]  No
+
+Use ←/→ to select • Enter/Y to confirm • N/Esc to cancel
+```
+
+### Behavior
+
+1. Retrieves the entry by ID
+2. If entry not found, displays error
+3. If `--force` not specified, shows confirmation prompt
+4. Deletes the entry from storage
+5. Displays success message
+
+### Aliases
+
+- `rm`
 
 ## list
 

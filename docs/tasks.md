@@ -235,9 +235,87 @@ This document outlines the detailed tasks for implementing the CLI time-tracking
   - [x] Add package-level documentation
 - [x] Create contributing guide if open-sourcing
 
-## Phase 6: Build and Deployment
+## Phase 6: Additional Commands (New Requirements)
 
-### Task 6.1: Build Configuration
+### Task 6.1: Implement `status` Command
+
+- [ ] Create `status` command using Cobra in `cmd/`
+  - [ ] Add command definition and help text
+- [ ] Implement status logic
+  - [ ] Check for running entry
+  - [ ] If running, display task name, start time, elapsed time, and tags
+  - [ ] Calculate and format elapsed time (live duration)
+  - [ ] If not running, display appropriate message
+  - [ ] Format output in a user-friendly way
+- [ ] Add tests for status command
+  - [ ] Test with running entry
+  - [ ] Test with no running entry
+  - [ ] Test elapsed time calculation
+
+### Task 6.2: Implement `edit` Command
+
+- [ ] Create `edit <ID>` command using Cobra in `cmd/`
+  - [ ] Add command definition and help text
+  - [ ] Add argument validation for ID
+  - [ ] Add flags:
+    - [ ] `--task` or `-t` for task name
+    - [ ] `--tags` for tags
+    - [ ] `--start` for start time
+    - [ ] `--end` for end time
+    - [ ] `--interactive` or `-i` for interactive mode (default)
+- [ ] Implement edit logic
+  - [ ] Retrieve entry by ID
+  - [ ] Handle case when entry not found
+  - [ ] Validate end time is after start time
+  - [ ] If using interactive mode, show TUI form with current values
+  - [ ] Update entry in storage
+  - [ ] Display success message
+- [ ] Create interactive edit form
+  - [ ] Pre-fill form with current values
+  - [ ] Allow editing all fields (start time, end time, task name, tags)
+  - [ ] Validate inputs before saving
+  - [ ] Handle cancellation
+- [ ] Add tests for edit command
+  - [ ] Test editing existing entry
+  - [ ] Test error for non-existent ID
+  - [ ] Test validation (end time after start time)
+  - [ ] Test updating individual fields
+  - [ ] Test interactive mode
+
+### Task 6.3: Implement `remove` Command
+
+- [ ] Create `remove <ID>` command using Cobra in `cmd/`
+  - [ ] Add command definition and help text
+  - [ ] Add argument validation for ID
+  - [ ] Add flags:
+    - [ ] `--force` or `-f` to skip confirmation
+  - [ ] Add alias: `rm`
+- [ ] Implement remove logic
+  - [ ] Retrieve entry by ID
+  - [ ] Handle case when entry not found
+  - [ ] If not using --force, show confirmation prompt
+  - [ ] Display entry details in confirmation
+  - [ ] Delete entry from storage
+  - [ ] Display success message
+- [ ] Create confirmation dialog
+  - [ ] Use reusable TUI confirm component
+  - [ ] Display entry details (task, duration, tags)
+  - [ ] Warn that action cannot be undone
+  - [ ] Handle yes/no/cancel
+- [ ] Implement deletion in storage layer
+  - [ ] Add `DeleteEntry(id string) error` method to Storage interface
+  - [ ] Implement deletion in JSONStorage
+  - [ ] Handle concurrent access safely
+- [ ] Add tests for remove command
+  - [ ] Test removing existing entry
+  - [ ] Test error for non-existent ID
+  - [ ] Test confirmation prompt
+  - [ ] Test --force flag
+  - [ ] Test storage deletion
+
+## Phase 7: Build and Deployment
+
+### Task 7.1: Build Configuration
 
 - [ ] Update Taskfile.yml with build tasks
   - [ ] Add `build` task to compile binary
@@ -248,7 +326,7 @@ This document outlines the detailed tasks for implementing the CLI time-tracking
   - [ ] Use git tags for versioning
   - [ ] Embed version in binary
 
-### Task 6.2: Distribution
+### Task 7.2: Distribution
 
 - [ ] Create installation scripts
   - [ ] Install script for Unix-like systems
@@ -262,13 +340,14 @@ This document outlines the detailed tasks for implementing the CLI time-tracking
 
 Follow this suggested order for implementation:
 
-1. **Phase 1** (Foundation): Complete all tasks in Phase 1 to establish the data layer
-2. **Phase 2** (Core Features): Implement start and stop commands
-3. **Phase 3** (Viewing): Implement list, show, and basic view command
-4. **Phase 3 (Advanced Views)**: Add advanced view options (hourly, weekday, etc.)
-5. **Phase 4** (UX): Enhance user experience with better TUI components
-6. **Phase 5** (Quality): Add comprehensive tests and documentation
-7. **Phase 6** (Distribution): Set up build and deployment
+1. **Phase 1** (Foundation): Complete all tasks in Phase 1 to establish the data layer ✅
+2. **Phase 2** (Core Features): Implement start and stop commands ✅
+3. **Phase 3** (Viewing): Implement list, show, and basic view command ✅
+4. **Phase 3 (Advanced Views)**: Add advanced view options (hourly, weekday, etc.) ✅
+5. **Phase 4** (UX): Enhance user experience with better TUI components ✅
+6. **Phase 5** (Quality): Add comprehensive tests and documentation ✅
+7. **Phase 6** (Additional Commands): Implement status, edit, and remove commands
+8. **Phase 7** (Distribution): Set up build and deployment
 
 ## Notes
 

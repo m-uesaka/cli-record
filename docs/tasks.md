@@ -239,79 +239,79 @@ This document outlines the detailed tasks for implementing the CLI time-tracking
 
 ### Task 6.1: Implement `status` Command
 
-- [ ] Create `status` command using Cobra in `cmd/`
-  - [ ] Add command definition and help text
-- [ ] Implement status logic
-  - [ ] Check for running entry
-  - [ ] If running, display task name, start time, elapsed time, and tags
-  - [ ] Calculate and format elapsed time (live duration)
-  - [ ] If not running, display appropriate message
-  - [ ] Format output in a user-friendly way
-- [ ] Add tests for status command
-  - [ ] Test with running entry
-  - [ ] Test with no running entry
-  - [ ] Test elapsed time calculation
+- [x] Create `status` command using Cobra in `cmd/`
+  - [x] Add command definition and help text
+- [x] Implement status logic
+  - [x] Check for running entry
+  - [x] If running, display task name, start time, elapsed time, and tags
+  - [x] Calculate and format elapsed time (live duration)
+  - [x] If not running, display appropriate message
+  - [x] Format output in a user-friendly way
+- [x] Add tests for status command
+  - [x] Test with running entry
+  - [x] Test with no running entry
+  - [x] Test elapsed time calculation
 
 ### Task 6.2: Implement `edit` Command
 
-- [ ] Create `edit <ID>` command using Cobra in `cmd/`
-  - [ ] Add command definition and help text
-  - [ ] Add argument validation for ID
-  - [ ] Add flags:
-    - [ ] `--task` or `-t` for task name
-    - [ ] `--tags` for tags
-    - [ ] `--start` for start time
-    - [ ] `--end` for end time
-    - [ ] `--interactive` or `-i` for interactive mode (default)
-- [ ] Implement edit logic
-  - [ ] Retrieve entry by ID
-  - [ ] Handle case when entry not found
-  - [ ] Validate end time is after start time
-  - [ ] If using interactive mode, show TUI form with current values
-  - [ ] Update entry in storage
-  - [ ] Display success message
-- [ ] Create interactive edit form
-  - [ ] Pre-fill form with current values
-  - [ ] Allow editing all fields (start time, end time, task name, tags)
-  - [ ] Validate inputs before saving
-  - [ ] Handle cancellation
-- [ ] Add tests for edit command
-  - [ ] Test editing existing entry
-  - [ ] Test error for non-existent ID
-  - [ ] Test validation (end time after start time)
-  - [ ] Test updating individual fields
-  - [ ] Test interactive mode
+- [x] Create `edit <ID>` command using Cobra in `cmd/`
+  - [x] Add command definition and help text
+  - [x] Add argument validation for ID
+  - [x] Add flags:
+    - [x] `--task` or `-t` for task name
+    - [x] `--tags` for tags
+    - [x] `--start` for start time
+    - [x] `--end` for end time
+    - [x] `--interactive` or `-i` for interactive mode (default)
+- [x] Implement edit logic
+  - [x] Retrieve entry by ID
+  - [x] Handle case when entry not found
+  - [x] Validate end time is after start time
+  - [x] If using interactive mode, show TUI form with current values
+  - [x] Update entry in storage
+  - [x] Display success message
+- [x] Create interactive edit form
+  - [x] Pre-fill form with current values
+  - [x] Allow editing all fields (start time, end time, task name, tags)
+  - [x] Validate inputs before saving
+  - [x] Handle cancellation
+- [x] Add tests for edit command
+  - [x] Test editing existing entry
+  - [x] Test error for non-existent ID
+  - [x] Test validation (end time after start time)
+  - [x] Test updating individual fields
+  - [x] Test interactive mode
 
 ### Task 6.3: Implement `remove` Command
 
-- [ ] Create `remove <ID>` command using Cobra in `cmd/`
-  - [ ] Add command definition and help text
-  - [ ] Add argument validation for ID
-  - [ ] Add flags:
-    - [ ] `--force` or `-f` to skip confirmation
-  - [ ] Add alias: `rm`
-- [ ] Implement remove logic
-  - [ ] Retrieve entry by ID
-  - [ ] Handle case when entry not found
-  - [ ] If not using --force, show confirmation prompt
-  - [ ] Display entry details in confirmation
-  - [ ] Delete entry from storage
-  - [ ] Display success message
-- [ ] Create confirmation dialog
-  - [ ] Use reusable TUI confirm component
-  - [ ] Display entry details (task, duration, tags)
-  - [ ] Warn that action cannot be undone
-  - [ ] Handle yes/no/cancel
-- [ ] Implement deletion in storage layer
-  - [ ] Add `DeleteEntry(id string) error` method to Storage interface
-  - [ ] Implement deletion in JSONStorage
-  - [ ] Handle concurrent access safely
-- [ ] Add tests for remove command
-  - [ ] Test removing existing entry
-  - [ ] Test error for non-existent ID
-  - [ ] Test confirmation prompt
-  - [ ] Test --force flag
-  - [ ] Test storage deletion
+- [x] Create `remove <ID>` command using Cobra in `cmd/`
+  - [x] Add command definition and help text
+  - [x] Add argument validation for ID
+  - [x] Add flags:
+    - [x] `--force` or `-f` to skip confirmation
+  - [x] Add alias: `rm`
+- [x] Implement remove logic
+  - [x] Retrieve entry by ID
+  - [x] Handle case when entry not found
+  - [x] If not using --force, show confirmation prompt
+  - [x] Display entry details in confirmation
+  - [x] Delete entry from storage
+  - [x] Display success message
+- [x] Create confirmation dialog
+  - [x] Use reusable TUI confirm component
+  - [x] Display entry details (task, duration, tags)
+  - [x] Warn that action cannot be undone
+  - [x] Handle yes/no/cancel
+- [x] Implement deletion in storage layer
+  - [x] Add `DeleteEntry(id string) error` method to Storage interface
+  - [x] Implement deletion in JSONStorage
+  - [x] Handle concurrent access safely
+- [x] Add tests for remove command
+  - [x] Test removing existing entry
+  - [x] Test error for non-existent ID
+  - [x] Test confirmation prompt
+  - [x] Test --force flag
+  - [x] Test storage deletion
 
 ## Phase 7: Build and Deployment
 

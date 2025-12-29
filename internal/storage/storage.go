@@ -17,6 +17,7 @@ type Storage interface {
 	UpdateEntry(entry *models.TimeEntry) error
 	GetRunningEntry() (*models.TimeEntry, error)
 	ListTags() ([]string, error)
+	DeleteEntry(id string) error
 }
 
 type JSONStorage struct {
@@ -137,6 +138,33 @@ func (s *JSONStorage) ListTags() ([]string, error) {
 	}
 
 	return tags, nil
+}
+
+func (s *JSONStorage) DeleteEntry(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	entries, err := s.loadEntries()
+	if err != nil {
+		return err
+	}
+
+	// Find and remove the entry
+	newEntries := make([]*models.TimeEntry, 0, len(entries))
+	found := false
+	for _, entry := range entries {
+		if entry.ID == id {
+			found = true
+			continue
+		}
+		newEntries = append(newEntries, entry)
+	}
+
+	if !found {
+		return fmt.Errorf("entry with ID %s not found", id)
+	}
+
+	return s.saveEntries(newEntries)
 }
 
 func (s *JSONStorage) loadEntries() ([]*models.TimeEntry, error) {

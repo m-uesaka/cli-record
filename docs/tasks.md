@@ -5,199 +5,209 @@ This document outlines the detailed tasks for implementing the CLI time-tracking
 ## Phase 1: Core Data Models and Storage
 
 ### Task 1.1: Define Core Data Models
-- [ ] Create `TimeEntry` struct in `internal/models/`
-  - [ ] Add field: `ID` (unique identifier, use UUID)
-  - [ ] Add field: `StartTime` (timestamp)
-  - [ ] Add field: `EndTime` (timestamp, nullable for running entries)
-  - [ ] Add field: `TaskName` (string)
-  - [ ] Add field: `Tags` (list of strings)
-  - [ ] Add method: `Duration()` to calculate duration from start and end time
-  - [ ] Add method: `IsRunning()` to check if entry is currently running
-- [ ] Create `Tag` struct if needed for tag management
-- [ ] Add JSON serialization tags to all structs
+
+- [x] Create `TimeEntry` struct in `internal/models/`
+  - [x] Add field: `ID` (unique identifier, use UUID)
+  - [x] Add field: `StartTime` (timestamp)
+  - [x] Add field: `EndTime` (timestamp, nullable for running entries)
+  - [x] Add field: `TaskName` (string)
+  - [x] Add field: `Tags` (list of strings)
+  - [x] Add method: `Duration()` to calculate duration from start and end time
+  - [x] Add method: `IsRunning()` to check if entry is currently running
+- [x] Create `Tag` struct if needed for tag management
+- [x] Add JSON serialization tags to all structs
 
 ### Task 1.2: Implement Storage Layer
-- [ ] Create storage interface in `internal/storage/`
-  - [ ] Define `Storage` interface with methods:
-    - [ ] `SaveEntry(entry *models.TimeEntry) error`
-    - [ ] `GetEntry(id string) (*models.TimeEntry, error)`
-    - [ ] `ListEntries() ([]*models.TimeEntry, error)`
-    - [ ] `UpdateEntry(entry *models.TimeEntry) error`
-    - [ ] `GetRunningEntry() (*models.TimeEntry, error)`
-    - [ ] `ListTags() ([]string, error)`
-- [ ] Implement JSON file storage
-  - [ ] Create `JSONStorage` struct implementing `Storage` interface
-  - [ ] Implement file read/write operations with proper locking
-  - [ ] Handle concurrent access safely
-  - [ ] Define default storage location (e.g., `~/.cli-record/data.json`)
-  - [ ] Create storage directory if it doesn't exist
-- [ ] Add tests for storage layer
-  - [ ] Test saving and retrieving entries
-  - [ ] Test handling non-existent files
-  - [ ] Test concurrent access scenarios
+
+- [x] Create storage interface in `internal/storage/`
+  - [x] Define `Storage` interface with methods:
+    - [x] `SaveEntry(entry *models.TimeEntry) error`
+    - [x] `GetEntry(id string) (*models.TimeEntry, error)`
+    - [x] `ListEntries() ([]*models.TimeEntry, error)`
+    - [x] `UpdateEntry(entry *models.TimeEntry) error`
+    - [x] `GetRunningEntry() (*models.TimeEntry, error)`
+    - [x] `ListTags() ([]string, error)`
+- [x] Implement JSON file storage
+  - [x] Create `JSONStorage` struct implementing `Storage` interface
+  - [x] Implement file read/write operations with proper locking
+  - [x] Handle concurrent access safely
+  - [x] Define default storage location (e.g., `~/.cli-record/data.json`)
+  - [x] Create storage directory if it doesn't exist
+- [x] Add tests for storage layer
+  - [x] Test saving and retrieving entries
+  - [x] Test handling non-existent files
+  - [x] Test concurrent access scenarios
 
 ## Phase 2: CLI Commands - Time Recording
 
 ### Task 2.1: Implement `start` Command
-- [ ] Create `start` command using Cobra in `cmd/`
-  - [ ] Add command definition and help text
-  - [ ] Add flags:
-    - [ ] `--task` or `-t` for task name (optional)
-    - [ ] `--tags` for comma-separated tags (optional)
-- [ ] Implement TUI prompt for task details
-  - [ ] Use Bubble Tea or similar library
-  - [ ] Create task name input form (optional field)
-  - [ ] Create tags input with autocomplete from existing tags
-  - [ ] Handle submission and cancellation
-- [ ] Implement start logic
-  - [ ] Check if there's already a running entry
-  - [ ] If running entry exists, prompt user to stop it first
-  - [ ] Generate unique ID for new entry (UUID)
-  - [ ] Create new TimeEntry with start time
-  - [ ] Save entry to storage
-  - [ ] Display success message with entry ID
-- [ ] Add tests for start command
-  - [ ] Test starting with task name and tags
-  - [ ] Test starting without task name
-  - [ ] Test error when entry already running
+
+- [x] Create `start` command using Cobra in `cmd/`
+  - [x] Add command definition and help text
+  - [x] Add flags:
+    - [x] `--task` or `-t` for task name (optional)
+    - [x] `--tags` for comma-separated tags (optional)
+- [x] Implement TUI prompt for task details
+  - [x] Use Bubble Tea or similar library
+  - [x] Create task name input form (optional field)
+  - [x] Create tags input with autocomplete from existing tags
+  - [x] Handle submission and cancellation
+- [x] Implement start logic
+  - [x] Check if there's already a running entry
+  - [x] If running entry exists, prompt user to stop it first
+  - [x] Generate unique ID for new entry (UUID)
+  - [x] Create new TimeEntry with start time
+  - [x] Save entry to storage
+  - [x] Display success message with entry ID
+- [x] Add tests for start command
+  - [x] Test starting with task name and tags
+  - [x] Test starting without task name
+  - [x] Test error when entry already running
 
 ### Task 2.2: Implement `stop` Command
-- [ ] Create `stop` command using Cobra in `cmd/`
-  - [ ] Add command definition and help text
-- [ ] Implement stop logic
-  - [ ] Retrieve currently running entry
-  - [ ] If no running entry, display error message
-  - [ ] If task name is missing, prompt user to input it
-  - [ ] Set end time to current timestamp
-  - [ ] Update entry in storage
-  - [ ] Display summary (task name, duration, tags)
-- [ ] Add tests for stop command
-  - [ ] Test stopping running entry
-  - [ ] Test error when no entry is running
-  - [ ] Test prompting for task name when missing
+
+- [x] Create `stop` command using Cobra in `cmd/`
+  - [x] Add command definition and help text
+- [x] Implement stop logic
+  - [x] Retrieve currently running entry
+  - [x] If no running entry, display error message
+  - [x] If task name is missing, prompt user to input it
+  - [x] Set end time to current timestamp
+  - [x] Update entry in storage
+  - [x] Display summary (task name, duration, tags)
+- [x] Add tests for stop command
+  - [x] Test stopping running entry
+  - [x] Test error when no entry is running
+  - [x] Test prompting for task name when missing
 
 ## Phase 3: CLI Commands - Viewing Entries
 
 ### Task 3.1: Implement `list` Command
-- [ ] Create `list` command using Cobra in `cmd/`
-  - [ ] Add command definition and help text
-  - [ ] Add flags for filtering:
-    - [ ] `--from` for start date
-    - [ ] `--to` for end date
-    - [ ] `--tags` for filtering by tags
-    - [ ] `--task` for filtering by task name
-- [ ] Implement filtering logic
-  - [ ] Filter entries by date range
-  - [ ] Filter entries by tags (support multiple tags)
-  - [ ] Filter entries by task name (support partial matching)
-- [ ] Implement display logic
-  - [ ] Format entries in a table view
-  - [ ] Show: ID, start time, end time, duration, task name, tags
-  - [ ] Display total time spent at the bottom
-  - [ ] Group by task name and show subtotals
-- [ ] Add tests for list command
-  - [ ] Test listing all entries
-  - [ ] Test filtering by date range
-  - [ ] Test filtering by tags
-  - [ ] Test filtering by task name
+
+- [x] Create `list` command using Cobra in `cmd/`
+  - [x] Add command definition and help text
+  - [x] Add flags for filtering:
+    - [x] `--from` for start date
+    - [x] `--to` for end date
+    - [x] `--tags` for filtering by tags
+    - [x] `--task` for filtering by task name
+- [x] Implement filtering logic
+  - [x] Filter entries by date range
+  - [x] Filter entries by tags (support multiple tags)
+  - [x] Filter entries by task name (support partial matching)
+- [x] Implement display logic
+  - [x] Format entries in a table view
+  - [x] Show: ID, start time, end time, duration, task name, tags
+  - [x] Display total time spent at the bottom
+  - [x] Group by task name and show subtotals
+- [x] Add tests for list command
+  - [x] Test listing all entries
+  - [x] Test filtering by date range
+  - [x] Test filtering by tags
+  - [x] Test filtering by task name
 
 ### Task 3.2: Implement `show` Command
-- [ ] Create `show <ID>` command using Cobra in `cmd/`
-  - [ ] Add command definition and help text
-  - [ ] Add argument validation for ID
-- [ ] Implement show logic
-  - [ ] Retrieve entry by ID from storage
-  - [ ] Handle case when entry not found
-  - [ ] Display detailed information:
-    - [ ] Start time (formatted)
-    - [ ] End time (formatted)
-    - [ ] Duration (human-readable format)
-    - [ ] Task name
-    - [ ] Tags (formatted list)
-- [ ] Add tests for show command
-  - [ ] Test showing existing entry
-  - [ ] Test error for non-existent ID
+
+- [x] Create `show <ID>` command using Cobra in `cmd/`
+  - [x] Add command definition and help text
+  - [x] Add argument validation for ID
+- [x] Implement show logic
+  - [x] Retrieve entry by ID from storage
+  - [x] Handle case when entry not found
+  - [x] Display detailed information:
+    - [x] Start time (formatted)
+    - [x] End time (formatted)
+    - [x] Duration (human-readable format)
+    - [x] Task name
+    - [x] Tags (formatted list)
+- [x] Add tests for show command
+  - [x] Test showing existing entry
+  - [x] Test error for non-existent ID
 
 ### Task 3.3: Implement `view` Command
-- [ ] Create `view` command using Cobra in `cmd/`
-  - [ ] Add command definition and help text
-  - [ ] Add flags for filtering:
-    - [ ] `--from` for start date
-    - [ ] `--to` for end date
-    - [ ] `--tags` for filtering by tags
-    - [ ] `--task` for filtering by task name
-  - [ ] Add flags for grouping/viewing:
-    - [ ] `--by` for grouping (task, tag, day, week, month, year)
-    - [ ] `--view-by-hour` for hourly breakdown
-    - [ ] `--view-by-weekday` for weekday breakdown
-    - [ ] `--view-by-day-of-month` for day-of-month breakdown
-    - [ ] `--view-by-month` for monthly breakdown
-  - [ ] Add flags for export:
-    - [ ] `--format` for output format (table, csv)
-    - [ ] `--output` for output file path
-- [ ] Implement aggregation logic
-  - [ ] Create helper functions for time aggregation
-  - [ ] Group by task name
-  - [ ] Group by tags
-  - [ ] Group by day/week/month/year
-  - [ ] Calculate totals for each group
-- [ ] Implement hourly breakdown view
-  - [ ] Aggregate time spent in each hour of the day (0-23)
-  - [ ] Display in table or chart format
-- [ ] Implement weekday breakdown view
-  - [ ] Aggregate time spent on each day of week (Mon-Sun)
-  - [ ] Display in table or chart format
-- [ ] Implement day-of-month breakdown view
-  - [ ] Aggregate time spent on each day of month (1-31)
-  - [ ] Display in table format
-- [ ] Implement monthly breakdown view
-  - [ ] Aggregate time spent in each month (Jan-Dec)
-  - [ ] Display in table format
-- [ ] Implement export functionality
-  - [ ] CSV export with proper headers
-  - [ ] Support other formats if needed
-  - [ ] Write to file or stdout
-- [ ] Add tests for view command
-  - [ ] Test grouping by task
-  - [ ] Test grouping by tags
-  - [ ] Test grouping by time periods
-  - [ ] Test hourly/weekday/day-of-month/monthly breakdowns
-  - [ ] Test CSV export
+
+- [x] Create `view` command using Cobra in `cmd/`
+  - [x] Add command definition and help text
+  - [x] Add flags for filtering:
+    - [x] `--from` for start date
+    - [x] `--to` for end date
+    - [x] `--tags` for filtering by tags
+    - [x] `--task` for filtering by task name
+  - [x] Add flags for grouping/viewing:
+    - [x] `--by` for grouping (task, tag, day, week, month, year)
+    - [x] `--view-by-hour` for hourly breakdown
+    - [x] `--view-by-weekday` for weekday breakdown
+    - [x] `--view-by-day-of-month` for day-of-month breakdown
+    - [x] `--view-by-month` for monthly breakdown
+  - [x] Add flags for export:
+    - [x] `--format` for output format (table, csv)
+    - [x] `--output` for output file path
+- [x] Implement aggregation logic
+  - [x] Create helper functions for time aggregation
+  - [x] Group by task name
+  - [x] Group by tags
+  - [x] Group by day/week/month/year
+  - [x] Calculate totals for each group
+- [x] Implement hourly breakdown view
+  - [x] Aggregate time spent in each hour of the day (0-23)
+  - [x] Display in table or chart format
+- [x] Implement weekday breakdown view
+  - [x] Aggregate time spent on each day of week (Mon-Sun)
+  - [x] Display in table or chart format
+- [x] Implement day-of-month breakdown view
+  - [x] Aggregate time spent on each day of month (1-31)
+  - [x] Display in table format
+- [x] Implement monthly breakdown view
+  - [x] Aggregate time spent in each month (Jan-Dec)
+  - [x] Display in table format
+- [x] Implement export functionality
+  - [x] CSV export with proper headers
+  - [x] Support other formats if needed
+  - [x] Write to file or stdout
+- [x] Add tests for view command
+  - [x] Test grouping by task
+  - [x] Test grouping by tags
+  - [x] Test grouping by time periods
+  - [x] Test hourly/weekday/day-of-month/monthly breakdowns
+  - [x] Test CSV export
 
 ## Phase 4: User Experience Improvements
 
 ### Task 4.1: Enhance TUI Components
-- [ ] Create reusable TUI components
-  - [ ] Input form component
-  - [ ] Autocomplete component for tags
-  - [ ] Table display component
-  - [ ] Confirmation dialog component
-- [ ] Implement tag autocomplete
-  - [ ] Load existing tags from storage
-  - [ ] Filter tags based on user input
-  - [ ] Allow creating new tags
-- [ ] Add proper error handling and user feedback
-  - [ ] Display errors in user-friendly format
-  - [ ] Show success messages with relevant details
-  - [ ] Add loading indicators for long operations
+
+- [x] Create reusable TUI components
+  - [x] Input form component
+  - [x] Autocomplete component for tags
+  - [x] Table display component
+  - [x] Confirmation dialog component
+- [x] Implement tag autocomplete
+  - [x] Load existing tags from storage
+  - [x] Filter tags based on user input
+  - [x] Allow creating new tags
+- [x] Add proper error handling and user feedback
+  - [x] Display errors in user-friendly format
+  - [x] Show success messages with relevant details
+  - [x] Add loading indicators for long operations
 
 ### Task 4.2: Improve Command-Line Interface
-- [ ] Add helpful error messages
-  - [ ] Validate command arguments and flags
-  - [ ] Provide suggestions for common mistakes
-- [ ] Add command aliases for convenience
-  - [ ] `ls` for `list`
-  - [ ] `st` for `start`
-  - [ ] `sp` for `stop`
-- [ ] Implement proper help text and examples
-  - [ ] Add examples to each command's help
-  - [ ] Document all flags and options
-- [ ] Add shell completion support
-  - [ ] Generate completion scripts for bash/zsh/fish
+
+- [x] Add helpful error messages
+  - [x] Validate command arguments and flags
+  - [x] Provide suggestions for common mistakes
+- [x] Add command aliases for convenience
+  - [x] `ls` for `list`
+  - [x] `st` for `start`
+  - [x] `sp` for `stop`
+- [x] Implement proper help text and examples
+  - [x] Add examples to each command's help
+  - [x] Document all flags and options
+- [x] Add shell completion support
+  - [x] Generate completion scripts for bash/zsh/fish (Cobra built-in)
 
 ## Phase 5: Testing and Documentation
 
 ### Task 5.1: Comprehensive Testing
+
 - [ ] Write unit tests for all packages
   - [ ] Models package tests
   - [ ] Storage package tests
@@ -212,6 +222,7 @@ This document outlines the detailed tasks for implementing the CLI time-tracking
   - [ ] Aim for >80% coverage
 
 ### Task 5.2: Documentation
+
 - [ ] Update README.md
   - [ ] Add installation instructions
   - [ ] Add usage examples for all commands
@@ -227,6 +238,7 @@ This document outlines the detailed tasks for implementing the CLI time-tracking
 ## Phase 6: Build and Deployment
 
 ### Task 6.1: Build Configuration
+
 - [ ] Update Taskfile.yml with build tasks
   - [ ] Add `build` task to compile binary
   - [ ] Add `test` task to run all tests
@@ -237,6 +249,7 @@ This document outlines the detailed tasks for implementing the CLI time-tracking
   - [ ] Embed version in binary
 
 ### Task 6.2: Distribution
+
 - [ ] Create installation scripts
   - [ ] Install script for Unix-like systems
   - [ ] Install script for Windows (if needed)

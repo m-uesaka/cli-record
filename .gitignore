@@ -34,3 +34,6 @@ Thumbs.db
 *.json
 !go.mod
 !go.sum
+
+docs/tasks.md
+docs/requirements.md

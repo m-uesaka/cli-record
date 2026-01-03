@@ -120,7 +120,7 @@ func TestValidateEndTimeAfterStart(t *testing.T) {
 				t := startTime
 				return &t
 			}(),
-			shouldErr: true,
+			shouldErr: false, // Allow 0 duration entries
 		},
 		{
 			name:      "nil end time",

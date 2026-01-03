@@ -47,6 +47,7 @@ func TestRunRemove_WithForce(t *testing.T) {
 	}
 
 	entry := &models.TimeEntry{
+		ID:        "test-id-123",
 		TaskName:  "Test Task",
 		StartTime: time.Now(),
 		Tags:      []string{"test"},

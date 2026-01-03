@@ -25,9 +25,7 @@ func TestRunConfigSet_InvalidTimeFormat(t *testing.T) {
 	}
 
 	cmd := configSetCmd
-	cmd.SetArgs([]string{"time-format", "invalid"})
-
-	err = cmd.Execute()
+	err = runConfigSet(cmd, []string{"time-format", "invalid"})
 	if err == nil {
 		t.Error("Expected error for invalid time format, got nil")
 	}
@@ -50,9 +48,7 @@ func TestRunConfigSet_InvalidKey(t *testing.T) {
 	}
 
 	cmd := configSetCmd
-	cmd.SetArgs([]string{"invalid-key", "value"})
-
-	err = cmd.Execute()
+	err = runConfigSet(cmd, []string{"invalid-key", "value"})
 	if err == nil {
 		t.Error("Expected error for invalid config key, got nil")
 	}

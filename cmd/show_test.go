@@ -47,6 +47,7 @@ func TestRunShow_Success(t *testing.T) {
 
 	now := time.Now()
 	entry := &models.TimeEntry{
+		ID:        "test-id-123",
 		TaskName:  "Test Task",
 		StartTime: now,
 		EndTime:   &now,
@@ -79,6 +80,7 @@ func TestRunShow_RunningEntry(t *testing.T) {
 	}
 
 	entry := &models.TimeEntry{
+		ID:        "test-running-123",
 		TaskName:  "Running Task",
 		StartTime: time.Now(),
 		EndTime:   nil, // Still running

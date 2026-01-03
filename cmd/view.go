@@ -61,37 +61,13 @@ func runView(cmd *cobra.Command, args []string) error {
 	}
 
 	// Validate format
-	validFormats := []string{"table", "csv", "json"}
-	isValidFormat := false
-	for _, f := range validFormats {
-		if viewFormat == f {
-			isValidFormat = true
-			break
-		}
-	}
-	if !isValidFormat {
-		return NewErrorWithSuggestion(
-			fmt.Errorf("invalid format: %s", viewFormat),
-			fmt.Sprintf("Valid formats are: %s", strings.Join(validFormats, ", ")),
-		)
+	if err := validateChoice(viewFormat, []string{"table", "csv", "json"}, "format"); err != nil {
+		return err
 	}
 
 	// Validate groupBy
-	if viewBy != "" {
-		validGroupBy := []string{"task", "tag", "day", "week", "month", "year"}
-		isValid := false
-		for _, g := range validGroupBy {
-			if viewBy == g {
-				isValid = true
-				break
-			}
-		}
-		if !isValid {
-			return NewErrorWithSuggestion(
-				fmt.Errorf("invalid --by value: %s", viewBy),
-				fmt.Sprintf("Valid values are: %s", strings.Join(validGroupBy, ", ")),
-			)
-		}
+	if err := validateChoice(viewBy, []string{"task", "tag", "day", "week", "month", "year"}, "--by value"); err != nil {
+		return err
 	}
 
 	store, err := storage.NewJSONStorage()
@@ -153,42 +129,19 @@ func generateGroupedReport(entries []*models.TimeEntry, groupBy string) ViewRepo
 	groups := make(map[string]*ReportGroup)
 
 	for _, entry := range entries {
-		var key string
-		switch groupBy {
-		case "task":
-			key = entry.TaskName
-		case "tag":
+		if groupBy == "tag" {
+			// Special handling for tags - one entry can belong to multiple groups
 			if len(entry.Tags) == 0 {
-				key = "(no tags)"
+				aggregateByKey(groups, "(no tags)", entry)
 			} else {
 				for _, tag := range entry.Tags {
-					if _, exists := groups[tag]; !exists {
-						groups[tag] = &ReportGroup{Name: tag}
-					}
-					groups[tag].Duration += entry.Duration()
-					groups[tag].Count++
+					aggregateByKey(groups, tag, entry)
 				}
-				continue
 			}
-		case "day":
-			key = entry.StartTime.Format("2006-01-02")
-		case "week":
-			year, week := entry.StartTime.ISOWeek()
-			key = fmt.Sprintf("%d-W%02d", year, week)
-		case "month":
-			key = entry.StartTime.Format("2006-01")
-		case "year":
-			key = entry.StartTime.Format("2006")
-		default:
-			key = entry.TaskName
-		}
-
-		if groupBy != "tag" {
-			if _, exists := groups[key]; !exists {
-				groups[key] = &ReportGroup{Name: key}
-			}
-			groups[key].Duration += entry.Duration()
-			groups[key].Count++
+		} else {
+			// Standard grouping - one entry belongs to one group
+			key := getGroupKey(entry, groupBy)
+			aggregateByKey(groups, key, entry)
 		}
 	}
 
@@ -196,71 +149,32 @@ func generateGroupedReport(entries []*models.TimeEntry, groupBy string) ViewRepo
 }
 
 func generateHourlyReport(entries []*models.TimeEntry) ViewReport {
-	groups := make(map[string]*ReportGroup)
-
-	// Initialize all hours
-	for h := 0; h < 24; h++ {
-		key := fmt.Sprintf("%02d:00-%02d:00", h, (h+1)%24)
-		groups[key] = &ReportGroup{Name: key, Duration: 0, Count: 0}
-	}
+	groups := initializeGroups(getHourlyKeys())
 
 	for _, entry := range entries {
-		duration := entry.Duration()
-		startTime := entry.StartTime
-		endTime := startTime.Add(duration)
-
-		// Distribute duration across hours
-		current := startTime
-		for current.Before(endTime) {
-			hour := current.Hour()
-			nextHour := current.Truncate(time.Hour).Add(time.Hour)
-			if nextHour.After(endTime) {
-				nextHour = endTime
-			}
-
-			segmentDuration := nextHour.Sub(current)
-			key := fmt.Sprintf("%02d:00-%02d:00", hour, (hour+1)%24)
-			groups[key].Duration += segmentDuration
-			if segmentDuration > 0 {
-				groups[key].Count++
-			}
-
-			current = nextHour
-		}
+		distributeEntryAcrossHours(groups, entry)
 	}
 
 	return createReport("Hourly Breakdown", groups)
 }
 
 func generateWeekdayReport(entries []*models.TimeEntry) ViewReport {
-	groups := make(map[string]*ReportGroup)
-	weekdays := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
-
-	for _, day := range weekdays {
-		groups[day] = &ReportGroup{Name: day, Duration: 0, Count: 0}
-	}
+	groups := initializeGroups(getWeekdayNames())
 
 	for _, entry := range entries {
-		weekday := entry.StartTime.Weekday()
-		day := weekdays[(weekday+6)%7] // Adjust so Monday is first
-		groups[day].Duration += entry.Duration()
-		groups[day].Count++
+		key := getWeekdayKey(entry.StartTime.Weekday())
+		groups[key].Duration += entry.Duration()
+		groups[key].Count++
 	}
 
 	return createReport("Weekday Breakdown", groups)
 }
 
 func generateDayOfMonthReport(entries []*models.TimeEntry) ViewReport {
-	groups := make(map[string]*ReportGroup)
-
-	for day := 1; day <= 31; day++ {
-		key := fmt.Sprintf("Day %02d", day)
-		groups[key] = &ReportGroup{Name: key, Duration: 0, Count: 0}
-	}
+	groups := initializeGroups(getDayOfMonthKeys())
 
 	for _, entry := range entries {
-		day := entry.StartTime.Day()
-		key := fmt.Sprintf("Day %02d", day)
+		key := fmt.Sprintf("Day %02d", entry.StartTime.Day())
 		groups[key].Duration += entry.Duration()
 		groups[key].Count++
 	}
@@ -269,18 +183,12 @@ func generateDayOfMonthReport(entries []*models.TimeEntry) ViewReport {
 }
 
 func generateMonthlyReport(entries []*models.TimeEntry) ViewReport {
-	groups := make(map[string]*ReportGroup)
-	months := []string{"January", "February", "March", "April", "May", "June",
-		"July", "August", "September", "October", "November", "December"}
-
-	for _, month := range months {
-		groups[month] = &ReportGroup{Name: month, Duration: 0, Count: 0}
-	}
+	groups := initializeGroups(getMonthNames())
 
 	for _, entry := range entries {
-		month := months[entry.StartTime.Month()-1]
-		groups[month].Duration += entry.Duration()
-		groups[month].Count++
+		key := getMonthKey(entry.StartTime.Month())
+		groups[key].Duration += entry.Duration()
+		groups[key].Count++
 	}
 
 	return createReport("Monthly Breakdown", groups)
@@ -335,10 +243,7 @@ func outputTableReport(output *os.File, report ViewReport) error {
 	fmt.Fprintln(output, strings.Repeat("-", 80))
 
 	for _, group := range report.Groups {
-		percentage := 0.0
-		if report.Total > 0 {
-			percentage = float64(group.Duration) / float64(report.Total) * 100
-		}
+		percentage := calculatePercentage(group.Duration, report.Total)
 		fmt.Fprintf(output, "%-40s %15s %12d %9.1f%%\n",
 			truncate(group.Name, 40),
 			formatDuration(group.Duration),
@@ -363,10 +268,7 @@ func outputCSVReport(output *os.File, report ViewReport) error {
 
 	// Write data
 	for _, group := range report.Groups {
-		percentage := 0.0
-		if report.Total > 0 {
-			percentage = float64(group.Duration) / float64(report.Total) * 100
-		}
+		percentage := calculatePercentage(group.Duration, report.Total)
 		if err := writer.Write([]string{
 			group.Name,
 			fmt.Sprintf("%.0f", group.Duration.Seconds()),
@@ -404,10 +306,7 @@ func outputJSONReport(output *os.File, report ViewReport) error {
 	}
 
 	for _, group := range report.Groups {
-		percentage := 0.0
-		if report.Total > 0 {
-			percentage = float64(group.Duration) / float64(report.Total) * 100
-		}
+		percentage := calculatePercentage(group.Duration, report.Total)
 		jsonReport.Groups = append(jsonReport.Groups, JSONGroup{
 			Name:              group.Name,
 			DurationSeconds:   group.Duration.Seconds(),

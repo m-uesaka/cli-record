@@ -17,10 +17,15 @@ tasks:
       - go mod tidy
 
   build:
-    desc: Build the application
+    desc: Build the application with version information
     cmds:
       - mkdir -p {{.BUILD_DIR}}
-      - go build -o {{.BUILD_DIR}}/{{.APP_NAME}} .
+      - |
+        go build \
+          -ldflags "-X 'github.com/m-uesaka/cli-record/cmd.Version=0.2.0' \
+                    -X 'github.com/m-uesaka/cli-record/cmd.Commit=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)' \
+                    -X 'github.com/m-uesaka/cli-record/cmd.BuildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ)'" \
+          -o {{.BUILD_DIR}}/{{.APP_NAME}} .
 
   run:
     desc: Run the application
@@ -37,6 +42,7 @@ tasks:
     cmds:
       - go test ./... -coverprofile=coverage.out
       - go tool cover -html=coverage.out -o coverage.html
+      - echo "Coverage report generated at coverage.html"
 
   lint:
     desc: Run linter (requires golangci-lint)
@@ -48,6 +54,18 @@ tasks:
     cmds:
       - go fmt ./...
 
+  vet:
+    desc: Run go vet
+    cmds:
+      - go vet ./...
+
+  check:
+    desc: Run all checks (fmt, vet, test)
+    cmds:
+      - task: fmt
+      - task: vet
+      - task: test
+
   clean:
     desc: Clean build artifacts
     cmds:
@@ -57,4 +75,9 @@ tasks:
   install:
     desc: Install the application to $GOPATH/bin
     cmds:
-      - go install .
+      - |
+        go install \
+          -ldflags "-X 'github.com/m-uesaka/cli-record/cmd.Version=0.2.0' \
+                    -X 'github.com/m-uesaka/cli-record/cmd.Commit=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)' \
+                    -X 'github.com/m-uesaka/cli-record/cmd.BuildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ)'" \
+          .

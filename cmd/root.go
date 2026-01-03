@@ -7,7 +7,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var Version = "0.1.0"
+var (
+	// Version information (set via ldflags during build)
+	Version   = "dev"
+	Commit    = "unknown"
+	BuildTime = "unknown"
+)
 
 var rootCmd = &cobra.Command{
 	Use:   "cli-record",
@@ -19,6 +24,8 @@ Features:
   • List and filter time entries
   • Generate detailed reports with various grouping options
   • Export data to CSV or JSON formats
+  • Archive and restore data
+  • Configurable settings (data path, time format, archive directory)
   • All data stored locally in JSON format
 
 Examples:
@@ -28,6 +35,9 @@ Examples:
   # Stop the current timer
   cli-record stop
 
+  # Check current status
+  cli-record status
+
   # List all entries
   cli-record list
 
@@ -35,7 +45,13 @@ Examples:
   cli-record view --by task
 
   # Export weekly report to CSV
-  cli-record view --by week --format csv --output report.csv`,
+  cli-record view --by week --format csv --output report.csv
+
+  # Archive current data
+  cli-record archive
+
+  # Configure settings
+  cli-record config set time-format 12h`,
 	Version: Version,
 }
 
@@ -47,5 +63,12 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.SetVersionTemplate("cli-record version {{.Version}}\n")
+	rootCmd.SetVersionTemplate(getVersionTemplate())
+}
+
+func getVersionTemplate() string {
+	return fmt.Sprintf(`cli-record version {{.Version}}
+Commit: %s
+Build Time: %s
+`, Commit, BuildTime)
 }

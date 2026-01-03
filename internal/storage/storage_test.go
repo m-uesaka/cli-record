@@ -606,3 +606,365 @@ func TestNewJSONStorage(t *testing.T) {
 		t.Error("expected non-empty file path")
 	}
 }
+
+func TestJSONStorage_InvalidCases(t *testing.T) {
+	t.Run("SaveEntry with nil entry", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		err := storage.SaveEntry(nil)
+		if err == nil {
+			t.Error("expected error when saving nil entry")
+		}
+	})
+
+	t.Run("UpdateEntry with nil entry", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		err := storage.UpdateEntry(nil)
+		if err == nil {
+			t.Error("expected error when updating nil entry")
+		}
+	})
+
+	t.Run("GetEntry with empty ID", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		entry, err := storage.GetEntry("")
+		if err == nil {
+			t.Error("expected error when getting entry with empty ID")
+		}
+		if entry != nil {
+			t.Error("expected nil entry for empty ID")
+		}
+	})
+
+	t.Run("DeleteEntry with empty ID", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		err := storage.DeleteEntry("")
+		if err == nil {
+			t.Error("expected error when deleting entry with empty ID")
+		}
+	})
+}
+
+func TestJSONStorage_CorruptedData(t *testing.T) {
+	t.Run("loadEntries with corrupted JSON", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		// Write corrupted JSON
+		corruptedData := []byte("{invalid json data")
+		os.WriteFile(storage.filePath, corruptedData, 0644)
+
+		entries, err := storage.loadEntries()
+		if err == nil {
+			t.Error("expected error when loading corrupted JSON")
+		}
+		if entries != nil {
+			t.Error("expected nil entries for corrupted data")
+		}
+	})
+
+	t.Run("ListEntries with corrupted JSON", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		// Write corrupted JSON
+		corruptedData := []byte("not valid json")
+		os.WriteFile(storage.filePath, corruptedData, 0644)
+
+		entries, err := storage.ListEntries()
+		if err == nil {
+			t.Error("expected error when listing entries with corrupted JSON")
+		}
+		if entries != nil {
+			t.Error("expected nil entries for corrupted JSON")
+		}
+	})
+
+	t.Run("GetEntry with corrupted JSON", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		// Write corrupted JSON
+		corruptedData := []byte("[{corrupted}]")
+		os.WriteFile(storage.filePath, corruptedData, 0644)
+
+		entry, err := storage.GetEntry("test-1")
+		if err == nil {
+			t.Error("expected error when getting entry with corrupted JSON")
+		}
+		if entry != nil {
+			t.Error("expected nil entry for corrupted JSON")
+		}
+	})
+
+	t.Run("UpdateEntry with corrupted JSON", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		// Write corrupted JSON
+		corruptedData := []byte("bad json")
+		os.WriteFile(storage.filePath, corruptedData, 0644)
+
+		testEntry := &models.TimeEntry{
+			ID:        "test-1",
+			StartTime: time.Now(),
+			TaskName:  "Test Task",
+		}
+
+		err := storage.UpdateEntry(testEntry)
+		if err == nil {
+			t.Error("expected error when updating entry with corrupted JSON")
+		}
+	})
+
+	t.Run("GetRunningEntry with corrupted JSON", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		// Write corrupted JSON
+		corruptedData := []byte("{invalid}")
+		os.WriteFile(storage.filePath, corruptedData, 0644)
+
+		entry, err := storage.GetRunningEntry()
+		if err == nil {
+			t.Error("expected error when getting running entry with corrupted JSON")
+		}
+		if entry != nil {
+			t.Error("expected nil entry for corrupted JSON")
+		}
+	})
+
+	t.Run("ListTags with corrupted JSON", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		// Write corrupted JSON
+		corruptedData := []byte("corrupted")
+		os.WriteFile(storage.filePath, corruptedData, 0644)
+
+		tags, err := storage.ListTags()
+		if err == nil {
+			t.Error("expected error when listing tags with corrupted JSON")
+		}
+		if tags != nil {
+			t.Error("expected nil tags for corrupted JSON")
+		}
+	})
+
+	t.Run("DeleteEntry with corrupted JSON", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		// Write corrupted JSON
+		corruptedData := []byte("bad data")
+		os.WriteFile(storage.filePath, corruptedData, 0644)
+
+		err := storage.DeleteEntry("test-1")
+		if err == nil {
+			t.Error("expected error when deleting entry with corrupted JSON")
+		}
+	})
+}
+
+func TestJSONStorage_ArchiveData_InvalidCases(t *testing.T) {
+	t.Run("archive when data file doesn't exist", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		// Don't create any data
+		tmpDir, _ := os.MkdirTemp("", "cli-record-archive-test-*")
+		defer os.RemoveAll(tmpDir)
+
+		archivePath := filepath.Join(tmpDir, "archive.json")
+		err := storage.ArchiveData(archivePath)
+		if err == nil {
+			t.Error("expected error when archiving non-existent data file")
+		}
+	})
+
+	t.Run("archive to invalid path", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		// Create test data
+		entry := &models.TimeEntry{
+			ID:        "test-1",
+			StartTime: time.Now(),
+			TaskName:  "Test Task",
+		}
+		storage.SaveEntry(entry)
+
+		// Try to archive to a path with invalid characters (Unix)
+		// This might not fail on all systems, but tests the error handling
+		invalidPath := "/\x00invalid/path/archive.json"
+		err := storage.ArchiveData(invalidPath)
+		if err == nil {
+			// On some systems this might not fail, so just log
+			t.Log("Archive to invalid path didn't fail (system-dependent)")
+		}
+	})
+}
+
+func TestJSONStorage_RestoreData_InvalidCases(t *testing.T) {
+	t.Run("restore from non-existent archive", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		err := storage.RestoreData("/non/existent/archive.json", true)
+		if err == nil {
+			t.Error("expected error when restoring from non-existent file")
+		}
+	})
+
+	t.Run("restore from corrupted archive", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		// Create corrupted archive
+		tmpDir, _ := os.MkdirTemp("", "cli-record-archive-test-*")
+		defer os.RemoveAll(tmpDir)
+
+		corruptedArchive := filepath.Join(tmpDir, "corrupted.json")
+		os.WriteFile(corruptedArchive, []byte("corrupted json"), 0644)
+
+		err := storage.RestoreData(corruptedArchive, true)
+		if err == nil {
+			t.Error("expected error when restoring from corrupted archive")
+		}
+	})
+
+	t.Run("restore with merge - corrupted current data", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		// Write corrupted current data
+		os.WriteFile(storage.filePath, []byte("corrupted"), 0644)
+
+		// Create valid archive
+		archiveStorage, archiveCleanup := setupTestStorage(t)
+		defer archiveCleanup()
+
+		archiveEntry := &models.TimeEntry{
+			ID:        "archive-1",
+			StartTime: time.Now(),
+			TaskName:  "Archived Task",
+		}
+		archiveStorage.SaveEntry(archiveEntry)
+
+		err := storage.RestoreData(archiveStorage.filePath, true)
+		if err == nil {
+			t.Error("expected error when merging with corrupted current data")
+		}
+	})
+
+	t.Run("restore with replace - invalid archive format", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		// Create current data
+		currentEntry := &models.TimeEntry{
+			ID:        "current-1",
+			StartTime: time.Now(),
+			TaskName:  "Current Task",
+		}
+		storage.SaveEntry(currentEntry)
+
+		// Create archive with invalid JSON
+		tmpDir, _ := os.MkdirTemp("", "cli-record-archive-test-*")
+		defer os.RemoveAll(tmpDir)
+
+		invalidArchive := filepath.Join(tmpDir, "invalid.json")
+		os.WriteFile(invalidArchive, []byte("{not an array}"), 0644)
+
+		err := storage.RestoreData(invalidArchive, false)
+		if err == nil {
+			t.Error("expected error when restoring invalid archive format")
+		}
+	})
+}
+
+func TestJSONStorage_ReadOnlyFileSystem(t *testing.T) {
+	t.Run("saveEntries with read-only directory", func(t *testing.T) {
+		if os.Getuid() == 0 {
+			t.Skip("Skipping test when running as root")
+		}
+
+		tmpDir, err := os.MkdirTemp("", "cli-record-readonly-test-*")
+		if err != nil {
+			t.Fatalf("failed to create temp dir: %v", err)
+		}
+		defer os.RemoveAll(tmpDir)
+
+		storage := &JSONStorage{
+			filePath: filepath.Join(tmpDir, "data.json"),
+		}
+
+		// Create initial data
+		entry := &models.TimeEntry{
+			ID:        "test-1",
+			StartTime: time.Now(),
+			TaskName:  "Test Task",
+		}
+		storage.SaveEntry(entry)
+
+		// Make directory read-only
+		os.Chmod(tmpDir, 0444)
+		defer os.Chmod(tmpDir, 0755) // Restore permissions for cleanup
+
+		// Try to save - should fail on most systems
+		newEntry := &models.TimeEntry{
+			ID:        "test-2",
+			StartTime: time.Now(),
+			TaskName:  "Test Task 2",
+		}
+
+		err = storage.SaveEntry(newEntry)
+		// On some systems this might not fail immediately
+		if err == nil {
+			t.Log("SaveEntry to read-only directory didn't fail (system-dependent)")
+		}
+	})
+}
+
+func TestJSONStorage_EmptyFile(t *testing.T) {
+	t.Run("loadEntries with empty file", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		// Create empty file
+		os.WriteFile(storage.filePath, []byte(""), 0644)
+
+		entries, err := storage.loadEntries()
+		if err != nil {
+			t.Fatalf("loadEntries() with empty file error = %v", err)
+		}
+
+		if len(entries) != 0 {
+			t.Errorf("expected 0 entries from empty file, got %d", len(entries))
+		}
+	})
+
+	t.Run("ListEntries with empty file", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		// Create empty file
+		os.WriteFile(storage.filePath, []byte(""), 0644)
+
+		entries, err := storage.ListEntries()
+		if err != nil {
+			t.Fatalf("ListEntries() with empty file error = %v", err)
+		}
+
+		if len(entries) != 0 {
+			t.Errorf("expected 0 entries from empty file, got %d", len(entries))
+		}
+	})
+}

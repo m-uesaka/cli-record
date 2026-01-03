@@ -47,6 +47,10 @@ func (s *JSONStorage) SaveEntry(entry *models.TimeEntry) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if entry == nil {
+		return fmt.Errorf("entry cannot be nil")
+	}
+
 	entries, err := s.loadEntries()
 	if err != nil {
 		return err
@@ -59,6 +63,10 @@ func (s *JSONStorage) SaveEntry(entry *models.TimeEntry) error {
 func (s *JSONStorage) GetEntry(id string) (*models.TimeEntry, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+
+	if id == "" {
+		return nil, fmt.Errorf("entry ID cannot be empty")
+	}
 
 	entries, err := s.loadEntries()
 	if err != nil {
@@ -84,6 +92,10 @@ func (s *JSONStorage) ListEntries() ([]*models.TimeEntry, error) {
 func (s *JSONStorage) UpdateEntry(entry *models.TimeEntry) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	if entry == nil {
+		return fmt.Errorf("entry cannot be nil")
+	}
 
 	entries, err := s.loadEntries()
 	if err != nil {
@@ -145,6 +157,10 @@ func (s *JSONStorage) ListTags() ([]string, error) {
 func (s *JSONStorage) DeleteEntry(id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	if id == "" {
+		return fmt.Errorf("entry ID cannot be empty")
+	}
 
 	entries, err := s.loadEntries()
 	if err != nil {

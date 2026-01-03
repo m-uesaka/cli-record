@@ -39,3 +39,4 @@ docs/tasks.md
 docs/requirements.md
 # Added by goreleaser init:
 dist/
+htmlcov/cover.html

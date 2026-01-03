@@ -291,3 +291,116 @@ func TestReset(t *testing.T) {
 		t.Errorf("expected default time format 24h, got %s", defaultCfg.TimeFormat)
 	}
 }
+
+func TestLoadFromPath_InvalidFile(t *testing.T) {
+	tests := []struct {
+		name    string
+		content string
+	}{
+		{
+			name:    "invalid TOML",
+			content: "this is not valid TOML {{{",
+		},
+		{
+			name:    "empty file",
+			content: "",
+		},
+		{
+			name: "invalid time format in file",
+			content: `data_file_path = "/test/data.json"
+time_format = "invalid"
+archive_directory = "/test/archives"`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir, err := os.MkdirTemp("", "cli-record-config-test-*")
+			if err != nil {
+				t.Fatalf("failed to create temp dir: %v", err)
+			}
+			defer os.RemoveAll(tmpDir)
+
+			testFile := filepath.Join(tmpDir, "config.toml")
+			if err := os.WriteFile(testFile, []byte(tt.content), 0644); err != nil {
+				t.Fatalf("failed to write test file: %v", err)
+			}
+
+			_, err = loadFromPath(testFile)
+			// For invalid TOML or validation errors, we expect an error
+			if err == nil && tt.name != "empty file" {
+				t.Error("expected error for invalid config file, got nil")
+			}
+		})
+	}
+}
+
+func TestLoadFromPath_NonexistentFile(t *testing.T) {
+	_, err := loadFromPath("/nonexistent/path/config.toml")
+	if err == nil {
+		t.Error("expected error for nonexistent file, got nil")
+	}
+}
+
+func TestSaveToPath_InvalidDirectory(t *testing.T) {
+	// Try to save to a path where parent directory doesn't exist
+	testCfg := &Config{
+		DataFilePath:     "/test/path/data.json",
+		TimeFormat:       "24h",
+		ArchiveDirectory: "/test/archives",
+	}
+
+	// Use a path with non-existent parent directory
+	invalidPath := "/nonexistent/deeply/nested/path/config.toml"
+	
+	// This should fail because parent directory doesn't exist
+	err := saveToPath(testCfg, invalidPath)
+	if err == nil {
+		t.Error("expected error when saving to invalid path, got nil")
+	}
+}
+
+func TestConfig_Validate_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name    string
+		config  Config
+		wantErr bool
+	}{
+		{
+			name: "whitespace time format",
+			config: Config{
+				DataFilePath:     "/test/data.json",
+				TimeFormat:       "  24h  ",
+				ArchiveDirectory: "/test/archives",
+			},
+			wantErr: true,
+		},
+		{
+			name: "case sensitive time format",
+			config: Config{
+				DataFilePath:     "/test/data.json",
+				TimeFormat:       "24H",
+				ArchiveDirectory: "/test/archives",
+			},
+			wantErr: true,
+		},
+		{
+			name: "all fields empty",
+			config: Config{
+				DataFilePath:     "",
+				TimeFormat:       "",
+				ArchiveDirectory: "",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.config.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}

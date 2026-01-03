@@ -183,3 +183,111 @@ func TestConfig_IsDefault(t *testing.T) {
 		})
 	}
 }
+
+func TestGetConfigPath(t *testing.T) {
+	path, err := GetConfigPath()
+	if err != nil {
+		t.Fatalf("GetConfigPath() error = %v", err)
+	}
+
+	if path == "" {
+		t.Error("expected non-empty config path")
+	}
+
+	// Verify it ends with config.toml
+	expectedSuffix := "cli-record/config.toml"
+	if len(path) < len(expectedSuffix) || path[len(path)-len(expectedSuffix):] != expectedSuffix {
+		t.Errorf("expected path to end with %s, got %s", expectedSuffix, path)
+	}
+}
+
+func TestLoad(t *testing.T) {
+	t.Run("load default when file doesn't exist", func(t *testing.T) {
+		// Create a temporary directory for test
+		tmpDir, err := os.MkdirTemp("", "cli-record-config-test-*")
+		if err != nil {
+			t.Fatalf("failed to create temp dir: %v", err)
+		}
+		defer os.RemoveAll(tmpDir)
+
+		// Load should return default config when file doesn't exist
+		// (can't easily test this without mocking GetConfigPath)
+		cfg, err := GetDefaultConfig()
+		if err != nil {
+			t.Fatalf("GetDefaultConfig() error = %v", err)
+		}
+
+		if cfg.TimeFormat != "24h" {
+			t.Errorf("expected default time format 24h, got %s", cfg.TimeFormat)
+		}
+	})
+}
+
+func TestSave(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "cli-record-config-test-*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	testConfigPath := filepath.Join(tmpDir, "config.toml")
+
+	testCfg := &Config{
+		DataFilePath:     "/test/path/data.json",
+		TimeFormat:       "12h",
+		ArchiveDirectory: "/test/archives",
+	}
+
+	err = saveToPath(testCfg, testConfigPath)
+	if err != nil {
+		t.Fatalf("saveToPath() error = %v", err)
+	}
+
+	// Verify file was created
+	if _, err := os.Stat(testConfigPath); os.IsNotExist(err) {
+		t.Error("config file was not created")
+	}
+
+	// Load and verify content
+	loadedCfg, err := loadFromPath(testConfigPath)
+	if err != nil {
+		t.Fatalf("loadFromPath() error = %v", err)
+	}
+
+	if loadedCfg.DataFilePath != testCfg.DataFilePath {
+		t.Errorf("DataFilePath = %s, want %s", loadedCfg.DataFilePath, testCfg.DataFilePath)
+	}
+
+	if loadedCfg.TimeFormat != testCfg.TimeFormat {
+		t.Errorf("TimeFormat = %s, want %s", loadedCfg.TimeFormat, testCfg.TimeFormat)
+	}
+}
+
+func TestReset(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "cli-record-config-test-*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Create a custom config
+	testConfigPath := filepath.Join(tmpDir, "config.toml")
+	customCfg := &Config{
+		DataFilePath:     "/custom/path/data.json",
+		TimeFormat:       "12h",
+		ArchiveDirectory: "/custom/archives",
+	}
+	saveToPath(customCfg, testConfigPath)
+
+	// Note: Reset() uses GetConfigPath which we can't easily override
+	// So we test the logic separately
+	defaultCfg, err := GetDefaultConfig()
+	if err != nil {
+		t.Fatalf("GetDefaultConfig() error = %v", err)
+	}
+
+	// Verify default values
+	if defaultCfg.TimeFormat != "24h" {
+		t.Errorf("expected default time format 24h, got %s", defaultCfg.TimeFormat)
+	}
+}

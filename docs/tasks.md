@@ -313,9 +313,124 @@ This document outlines the detailed tasks for implementing the CLI time-tracking
   - [x] Test --force flag
   - [x] Test storage deletion
 
-## Phase 7: Build and Deployment
+## Phase 7: Data Management and Configuration
 
-### Task 7.1: Build Configuration
+### Task 7.1: Implement Configuration System
+
+- [ ] Create configuration model in `internal/config/`
+  - [ ] Define `Config` struct with fields:
+    - [ ] `DataFilePath` (string) - custom data file location
+    - [ ] `TimeFormat` (string) - 12H or 24H format preference
+    - [ ] `ArchiveDirectory` (string) - archive storage location
+  - [ ] Add default configuration values
+  - [ ] Add TOML serialization tags
+- [ ] Implement configuration storage
+  - [ ] Store config in `$HOME/.config/cli-record/config.toml`
+  - [ ] Create config directory if it doesn't exist
+  - [ ] Load configuration on application start
+  - [ ] Provide fallback to defaults if config file doesn't exist
+- [ ] Add tests for configuration
+  - [ ] Test loading configuration
+  - [ ] Test saving configuration
+  - [ ] Test default values
+  - [ ] Test configuration validation
+
+### Task 7.2: Implement `config` Command
+
+- [ ] Create `config` command using Cobra in `cmd/`
+  - [ ] Add command definition and help text
+  - [ ] Add subcommands:
+    - [ ] `config show` - display current configuration
+    - [ ] `config set <key> <value>` - set configuration value
+    - [ ] `config reset` - reset to default configuration
+- [ ] Implement config show
+  - [ ] Display all configuration values in a formatted way
+  - [ ] Show which values are using defaults vs custom
+- [ ] Implement config set
+  - [ ] Validate configuration keys
+  - [ ] Validate configuration values
+  - [ ] Update configuration file
+  - [ ] Provide helpful error messages for invalid inputs
+  - [ ] Support keys:
+    - [ ] `data-path` - set data file location
+    - [ ] `time-format` - set time format (12h/24h)
+    - [ ] `archive-dir` - set archive directory location
+- [ ] Implement config reset
+  - [ ] Prompt for confirmation
+  - [ ] Reset to default configuration
+  - [ ] Display success message
+- [ ] Add tests for config command
+  - [ ] Test showing configuration
+  - [ ] Test setting valid values
+  - [ ] Test setting invalid values
+  - [ ] Test resetting configuration
+
+### Task 7.3: Implement `archive` Command
+
+- [ ] Create `archive` command using Cobra in `cmd/`
+  - [ ] Add command definition and help text
+  - [ ] Add flags:
+    - [ ] `--output` or `-o` for custom archive file name
+    - [ ] `--list` or `-l` to list available archives
+- [ ] Implement archive logic
+  - [ ] Generate timestamp for archive file name (YYYY-MM-DD-HHMMSS)
+  - [ ] Copy current data file to archive directory
+  - [ ] Create archive directory if it doesn't exist
+  - [ ] Handle errors (e.g., file already exists, permission denied)
+  - [ ] Display success message with archive file path
+- [ ] Implement list archives functionality
+  - [ ] Scan archive directory for archived files
+  - [ ] Display list with file name, date, and size
+  - [ ] Sort by date (newest first)
+  - [ ] Handle case when no archives exist
+- [ ] Add archive management methods to storage layer
+  - [ ] Add `ArchiveData(archivePath string) error` method
+  - [ ] Implement file copying with proper error handling
+- [ ] Add tests for archive command
+  - [ ] Test creating archive
+  - [ ] Test listing archives
+  - [ ] Test custom archive name
+  - [ ] Test error handling
+
+### Task 7.4: Implement `restore` Command
+
+- [ ] Create `restore <archive-file>` command using Cobra in `cmd/`
+  - [ ] Add command definition and help text
+  - [ ] Add argument validation for archive file path
+  - [ ] Add flags:
+    - [ ] `--merge` (default) - merge with existing data
+    - [ ] `--replace` - replace existing data
+    - [ ] `--preview` - show what would be restored without applying
+- [ ] Implement restore logic
+  - [ ] Validate archive file exists
+  - [ ] Load archived data
+  - [ ] If merging, combine with existing data
+    - [ ] Avoid duplicates based on unique IDs
+    - [ ] Handle ID conflicts (keep newer entry or prompt user)
+  - [ ] If replacing, backup current data first
+  - [ ] Save restored data
+  - [ ] Display summary of restored entries
+- [ ] Implement merge algorithm
+  - [ ] Load both current and archived data
+  - [ ] Create map of existing entry IDs
+  - [ ] Add archived entries that don't conflict
+  - [ ] For conflicts, implement resolution strategy:
+    - [ ] Keep newer based on modification time (if available)
+    - [ ] Or prompt user to choose
+- [ ] Add restore methods to storage layer
+  - [ ] Add `RestoreData(archivePath string, merge bool) error` method
+  - [ ] Implement data merging logic
+  - [ ] Handle backup before replace
+- [ ] Add tests for restore command
+  - [ ] Test restoring with merge
+  - [ ] Test restoring with replace
+  - [ ] Test duplicate handling
+  - [ ] Test preview mode
+  - [ ] Test error handling (invalid file, corrupted data)
+
+## Phase 8: Build and Deployment
+
+### Task 8.1: Build Configuration
 
 - [ ] Update Taskfile.yml with build tasks
   - [ ] Add `build` task to compile binary
@@ -326,7 +441,7 @@ This document outlines the detailed tasks for implementing the CLI time-tracking
   - [ ] Use git tags for versioning
   - [ ] Embed version in binary
 
-### Task 7.2: Distribution
+### Task 8.2: Distribution
 
 - [ ] Create installation scripts
   - [ ] Install script for Unix-like systems
@@ -346,8 +461,9 @@ Follow this suggested order for implementation:
 4. **Phase 3 (Advanced Views)**: Add advanced view options (hourly, weekday, etc.) ✅
 5. **Phase 4** (UX): Enhance user experience with better TUI components ✅
 6. **Phase 5** (Quality): Add comprehensive tests and documentation ✅
-7. **Phase 6** (Additional Commands): Implement status, edit, and remove commands
-8. **Phase 7** (Distribution): Set up build and deployment
+7. **Phase 6** (Additional Commands): Implement status, edit, and remove commands ✅
+8. **Phase 7** (Data Management): Implement configuration, archive, and restore commands
+9. **Phase 8** (Distribution): Set up build and deployment
 
 ## Notes
 

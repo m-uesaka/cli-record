@@ -146,7 +146,7 @@ func filterEntries(entries []*models.TimeEntry) ([]*models.TimeEntry, error) {
 func displayEntries(entries []*models.TimeEntry) {
 	fmt.Println("Time Entries")
 	fmt.Println(strings.Repeat("=", 100))
-	fmt.Printf("%-36s %-20s %-20s %-12s %-20s %s\n", 
+	fmt.Printf("%-8s %-20s %-20s %-12s %-20s %s\n", 
 		"ID", "Start Time", "End Time", "Duration", "Task", "Tags")
 	fmt.Println(strings.Repeat("-", 100))
 
@@ -166,13 +166,13 @@ func displayEntries(entries []*models.TimeEntry) {
 			tagsStr = "-"
 		}
 
-		// Truncate ID for display
+		// Show first 6 characters of ID
 		shortID := entry.ID
-		if len(shortID) > 8 {
-			shortID = shortID[:8] + "..."
+		if len(shortID) > 6 {
+			shortID = shortID[:6]
 		}
 
-		fmt.Printf("%-36s %-20s %-20s %-12s %-20s %s\n",
+		fmt.Printf("%-8s %-20s %-20s %-12s %-20s %s\n",
 			shortID,
 			entry.StartTime.Format("2006-01-02 15:04:05"),
 			endTimeStr,
@@ -183,6 +183,7 @@ func displayEntries(entries []*models.TimeEntry) {
 
 	fmt.Println(strings.Repeat("=", 100))
 	fmt.Printf("Total: %s (%d entries)\n", formatDuration(totalDuration), len(entries))
+	fmt.Println("Note: Use the displayed ID prefix for edit/remove commands")
 }
 
 func displayGroupedEntries(entries []*models.TimeEntry, groupBy string) {

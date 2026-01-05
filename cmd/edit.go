@@ -21,9 +21,9 @@ var (
 )
 
 var editCmd = &cobra.Command{
-	Use:   "edit <ID>",
+	Use:   "edit <ID|prefix>",
 	Short: "Edit an existing time entry",
-	Long:  `Edit an existing time entry's details including start time, end time, task name, and tags.`,
+	Long:  `Edit an existing time entry's details including start time, end time, task name, and tags. You can specify the full ID or a unique prefix.`,
 	Args:  cobra.ExactArgs(1),
 	RunE:  runEdit,
 }
@@ -45,10 +45,14 @@ func runEdit(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to initialize storage: %w", err)
 	}
 
-	// Get the existing entry
-	entry, err := store.GetEntry(entryID)
+	// Try to get entry by prefix first, fall back to exact ID
+	entry, err := store.GetEntryByPrefix(entryID)
 	if err != nil {
-		return fmt.Errorf("failed to get entry: %w", err)
+		// If prefix fails, try exact ID
+		entry, err = store.GetEntry(entryID)
+		if err != nil {
+			return fmt.Errorf("failed to get entry: %w", err)
+		}
 	}
 
 	// Check if using command-line flags or interactive mode

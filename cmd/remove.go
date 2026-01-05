@@ -14,10 +14,10 @@ import (
 var removeForce bool
 
 var removeCmd = &cobra.Command{
-	Use:     "remove <ID>",
+	Use:     "remove <ID|prefix>",
 	Aliases: []string{"rm"},
 	Short:   "Remove a time entry",
-	Long:    `Permanently delete a time entry from the database. Prompts for confirmation by default.`,
+	Long:    `Permanently delete a time entry from the database. You can specify the full ID or a unique prefix. Prompts for confirmation by default.`,
 	Args:    cobra.ExactArgs(1),
 	RunE:    runRemove,
 }
@@ -35,10 +35,14 @@ func runRemove(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to initialize storage: %w", err)
 	}
 
-	// Get the entry to show details
-	entry, err := store.GetEntry(entryID)
+	// Try to get entry by prefix first, fall back to exact ID
+	entry, err := store.GetEntryByPrefix(entryID)
 	if err != nil {
-		return fmt.Errorf("failed to get entry: %w", err)
+		// If prefix fails, try exact ID
+		entry, err = store.GetEntry(entryID)
+		if err != nil {
+			return fmt.Errorf("failed to get entry: %w", err)
+		}
 	}
 
 	// If not using --force, show confirmation
@@ -53,8 +57,8 @@ func runRemove(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Delete the entry
-	if err := store.DeleteEntry(entryID); err != nil {
+	// Delete the entry using the actual ID
+	if err := store.DeleteEntry(entry.ID); err != nil {
 		return fmt.Errorf("failed to delete entry: %w", err)
 	}
 

@@ -181,9 +181,11 @@ Allows you to modify an existing time entry's details, including start time, end
 
 ### Arguments
 
-- `ID` (required): The unique identifier of the time entry to edit
+- `ID` (required): The unique identifier (or prefix) of the time entry to edit
   - Can be found using the `list` command
-  - Example: `cli-record edit 550e8400-e29b-41d4-a716-446655440000`
+  - Full ID example: `cli-record edit 550e8400-e29b-41d4-a716-446655440000`
+  - Prefix example (minimum 6 characters): `cli-record edit 550e84`
+  - If multiple entries match the prefix, an error is shown with all matching IDs
 
 ### Flags
 
@@ -208,22 +210,25 @@ Allows you to modify an existing time entry's details, including start time, end
 ### Examples
 
 ```bash
-# Edit using interactive mode (default)
+# Edit using interactive mode (default) with full ID
 cli-record edit 550e8400-e29b-41d4-a716-446655440000
 
-# Edit with command-line flags
-cli-record edit 550e8400-e29b-41d4-a716-446655440000 --task "New task name"
+# Edit using ID prefix (minimum 6 characters)
+cli-record edit 550e84
+
+# Edit with command-line flags using prefix
+cli-record edit 550e84 --task "New task name"
 
 # Update start and end times
-cli-record edit 550e8400-e29b-41d4-a716-446655440000 \
+cli-record edit 550e84 \
   --start "2025-12-29 09:00:00" \
   --end "2025-12-29 17:00:00"
 
 # Update tags only
-cli-record edit 550e8400-e29b-41d4-a716-446655440000 --tags "important,urgent"
+cli-record edit 550e84 --tags "important,urgent"
 
 # Update multiple fields
-cli-record edit 550e8400-e29b-41d4-a716-446655440000 \
+cli-record edit 550e84 \
   --task "Refactored feature" \
   --tags "development,refactoring" \
   --end "2025-12-29 18:00:00"
@@ -263,9 +268,11 @@ Permanently deletes a time entry from the database. By default, prompts for conf
 
 ### Arguments
 
-- `ID` (required): The unique identifier of the time entry to remove
+- `ID` (required): The unique identifier (or prefix) of the time entry to remove
   - Can be found using the `list` command
-  - Example: `cli-record remove 550e8400-e29b-41d4-a716-446655440000`
+  - Full ID example: `cli-record remove 550e8400-e29b-41d4-a716-446655440000`
+  - Prefix example (minimum 6 characters): `cli-record remove 550e84`
+  - If multiple entries match the prefix, an error is shown with all matching IDs
 
 ### Flags
 
@@ -275,14 +282,17 @@ Permanently deletes a time entry from the database. By default, prompts for conf
 ### Examples
 
 ```bash
-# Remove with confirmation prompt (default)
+# Remove with confirmation prompt using full ID
 cli-record remove 550e8400-e29b-41d4-a716-446655440000
 
-# Remove without confirmation
-cli-record remove 550e8400-e29b-41d4-a716-446655440000 --force
+# Remove with confirmation prompt using prefix
+cli-record remove 550e84
+
+# Remove without confirmation using prefix
+cli-record remove 550e84 --force
 
 # Using alias
-cli-record rm 550e8400-e29b-41d4-a716-446655440000
+cli-record rm 550e84
 ```
 
 ### Confirmation Prompt

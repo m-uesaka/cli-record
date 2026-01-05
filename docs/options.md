@@ -5,6 +5,7 @@ This document provides a comprehensive reference for all available commands and 
 ## Table of Contents
 
 - [Global Options](#global-options)
+- [Working with Entry IDs](#working-with-entry-ids)
 - [start](#start)
 - [stop](#stop)
 - [status](#status)
@@ -20,6 +21,70 @@ Options that can be used with any command:
 
 - `--help`, `-h`: Display help information for any command
 - `--version`, `-v`: Display version information
+
+## Working with Entry IDs
+
+Each time entry is assigned a unique identifier (UUID) when created. For convenience, you can use either the full ID or a shorter prefix when referencing entries.
+
+### ID Format
+
+- **Full ID**: 36-character UUID (e.g., `550e8400-e29b-41d4-a716-446655440000`)
+- **Short ID**: First 6+ characters of the full ID (e.g., `550e84`)
+
+### Using ID Prefixes
+
+Commands that accept entry IDs (`edit`, `remove`) support using ID prefixes instead of full IDs:
+
+```bash
+# Using full ID
+cli-record edit 550e8400-e29b-41d4-a716-446655440000 --task "New task"
+
+# Using short ID prefix (6+ characters)
+cli-record edit 550e84 --task "New task"
+```
+
+### Finding Entry IDs
+
+Use the `list` command to view entries with their short IDs:
+
+```bash
+cli-record list
+```
+
+Output example:
+```
+Time Entries
+====================================================================================================
+ID       Start Time           End Time             Duration     Task                 Tags
+----------------------------------------------------------------------------------------------------
+550e84   2025-12-29 14:30:00  2025-12-29 16:45:00  2h 15m       Write documentation  docs, writing
+abc123   2025-12-29 10:00:00  2025-12-29 12:00:00  2h 0m        Code review          development
+----------------------------------------------------------------------------------------------------
+Total: 4h 15m (2 entries)
+Note: Use the displayed ID prefix for edit/remove commands
+```
+
+### Handling Ambiguous Prefixes
+
+If multiple entries share the same prefix, you'll receive an error message:
+
+```bash
+$ cli-record edit 550
+Error: ambiguous ID prefix 550: matches 2 entries
+```
+
+To resolve this, use a longer prefix that uniquely identifies the entry:
+
+```bash
+$ cli-record edit 550e
+```
+
+### Best Practices
+
+- Use `list` to find the short ID before editing or removing entries
+- The displayed 6-character ID from `list` is usually sufficient
+- If you get an "ambiguous prefix" error, add more characters from the full ID
+- Full IDs are always supported for backward compatibility
 
 ## start
 

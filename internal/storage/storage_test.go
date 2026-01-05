@@ -933,6 +933,266 @@ func TestJSONStorage_ReadOnlyFileSystem(t *testing.T) {
 	})
 }
 
+func TestJSONStorage_GetEntryByPrefix(t *testing.T) {
+	t.Run("find entry with unique prefix", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		entry1 := &models.TimeEntry{
+			ID:        "abc123",
+			StartTime: time.Now(),
+			TaskName:  "Task 1",
+		}
+		entry2 := &models.TimeEntry{
+			ID:        "def456",
+			StartTime: time.Now(),
+			TaskName:  "Task 2",
+		}
+
+		storage.SaveEntry(entry1)
+		storage.SaveEntry(entry2)
+
+		// Test with unique prefix
+		result, err := storage.GetEntryByPrefix("abc")
+		if err != nil {
+			t.Fatalf("GetEntryByPrefix() error = %v", err)
+		}
+
+		if result.ID != "abc123" {
+			t.Errorf("expected entry ID 'abc123', got '%s'", result.ID)
+		}
+	})
+
+	t.Run("find entry with full ID", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		entry := &models.TimeEntry{
+			ID:        "test-full-id",
+			StartTime: time.Now(),
+			TaskName:  "Task",
+		}
+		storage.SaveEntry(entry)
+
+		result, err := storage.GetEntryByPrefix("test-full-id")
+		if err != nil {
+			t.Fatalf("GetEntryByPrefix() error = %v", err)
+		}
+
+		if result.ID != "test-full-id" {
+			t.Errorf("expected entry ID 'test-full-id', got '%s'", result.ID)
+		}
+	})
+
+	t.Run("ambiguous prefix returns error", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		entry1 := &models.TimeEntry{
+			ID:        "abc123",
+			StartTime: time.Now(),
+			TaskName:  "Task 1",
+		}
+		entry2 := &models.TimeEntry{
+			ID:        "abc456",
+			StartTime: time.Now(),
+			TaskName:  "Task 2",
+		}
+
+		storage.SaveEntry(entry1)
+		storage.SaveEntry(entry2)
+
+		result, err := storage.GetEntryByPrefix("abc")
+		if err == nil {
+			t.Error("expected error for ambiguous prefix")
+		}
+		if result != nil {
+			t.Error("expected nil result for ambiguous prefix")
+		}
+
+		if err != nil && fmt.Sprintf("%v", err) != "ambiguous ID prefix abc: matches 2 entries" {
+			t.Errorf("unexpected error message: %v", err)
+		}
+	})
+
+	t.Run("no match returns error", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		entry := &models.TimeEntry{
+			ID:        "abc123",
+			StartTime: time.Now(),
+			TaskName:  "Task",
+		}
+		storage.SaveEntry(entry)
+
+		result, err := storage.GetEntryByPrefix("xyz")
+		if err == nil {
+			t.Error("expected error when no entry matches prefix")
+		}
+		if result != nil {
+			t.Error("expected nil result when no entry matches")
+		}
+	})
+
+	t.Run("empty prefix returns error", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		result, err := storage.GetEntryByPrefix("")
+		if err == nil {
+			t.Error("expected error for empty prefix")
+		}
+		if result != nil {
+			t.Error("expected nil result for empty prefix")
+		}
+	})
+
+	t.Run("prefix with no entries", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		result, err := storage.GetEntryByPrefix("abc")
+		if err == nil {
+			t.Error("expected error when no entries exist")
+		}
+		if result != nil {
+			t.Error("expected nil result when no entries exist")
+		}
+	})
+}
+
+func TestJSONStorage_DeleteEntryByPrefix(t *testing.T) {
+	t.Run("delete entry with unique prefix", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		entry1 := &models.TimeEntry{
+			ID:        "abc123",
+			StartTime: time.Now(),
+			TaskName:  "Task 1",
+		}
+		entry2 := &models.TimeEntry{
+			ID:        "def456",
+			StartTime: time.Now(),
+			TaskName:  "Task 2",
+		}
+
+		storage.SaveEntry(entry1)
+		storage.SaveEntry(entry2)
+
+		err := storage.DeleteEntryByPrefix("abc")
+		if err != nil {
+			t.Fatalf("DeleteEntryByPrefix() error = %v", err)
+		}
+
+		// Verify entry was deleted
+		entries, _ := storage.ListEntries()
+		if len(entries) != 1 {
+			t.Errorf("expected 1 entry after deletion, got %d", len(entries))
+		}
+
+		if entries[0].ID != "def456" {
+			t.Errorf("wrong entry was deleted, remaining ID: %s", entries[0].ID)
+		}
+	})
+
+	t.Run("delete entry with full ID", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		entry := &models.TimeEntry{
+			ID:        "test-full-id",
+			StartTime: time.Now(),
+			TaskName:  "Task",
+		}
+		storage.SaveEntry(entry)
+
+		err := storage.DeleteEntryByPrefix("test-full-id")
+		if err != nil {
+			t.Fatalf("DeleteEntryByPrefix() error = %v", err)
+		}
+
+		entries, _ := storage.ListEntries()
+		if len(entries) != 0 {
+			t.Errorf("expected 0 entries after deletion, got %d", len(entries))
+		}
+	})
+
+	t.Run("ambiguous prefix returns error", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		entry1 := &models.TimeEntry{
+			ID:        "abc123",
+			StartTime: time.Now(),
+			TaskName:  "Task 1",
+		}
+		entry2 := &models.TimeEntry{
+			ID:        "abc456",
+			StartTime: time.Now(),
+			TaskName:  "Task 2",
+		}
+
+		storage.SaveEntry(entry1)
+		storage.SaveEntry(entry2)
+
+		err := storage.DeleteEntryByPrefix("abc")
+		if err == nil {
+			t.Error("expected error for ambiguous prefix")
+		}
+
+		// Verify no entries were deleted
+		entries, _ := storage.ListEntries()
+		if len(entries) != 2 {
+			t.Errorf("expected 2 entries (no deletion), got %d", len(entries))
+		}
+	})
+
+	t.Run("no match returns error", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		entry := &models.TimeEntry{
+			ID:        "abc123",
+			StartTime: time.Now(),
+			TaskName:  "Task",
+		}
+		storage.SaveEntry(entry)
+
+		err := storage.DeleteEntryByPrefix("xyz")
+		if err == nil {
+			t.Error("expected error when no entry matches prefix")
+		}
+
+		// Verify entry still exists
+		entries, _ := storage.ListEntries()
+		if len(entries) != 1 {
+			t.Errorf("expected 1 entry (no deletion), got %d", len(entries))
+		}
+	})
+
+	t.Run("empty prefix returns error", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		err := storage.DeleteEntryByPrefix("")
+		if err == nil {
+			t.Error("expected error for empty prefix")
+		}
+	})
+
+	t.Run("prefix with no entries", func(t *testing.T) {
+		storage, cleanup := setupTestStorage(t)
+		defer cleanup()
+
+		err := storage.DeleteEntryByPrefix("abc")
+		if err == nil {
+			t.Error("expected error when no entries exist")
+		}
+	})
+}
+
 func TestJSONStorage_EmptyFile(t *testing.T) {
 	t.Run("loadEntries with empty file", func(t *testing.T) {
 		storage, cleanup := setupTestStorage(t)

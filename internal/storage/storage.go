@@ -13,11 +13,13 @@ import (
 type Storage interface {
 	SaveEntry(entry *models.TimeEntry) error
 	GetEntry(id string) (*models.TimeEntry, error)
+	GetEntryByPrefix(prefix string) (*models.TimeEntry, error)
 	ListEntries() ([]*models.TimeEntry, error)
 	UpdateEntry(entry *models.TimeEntry) error
 	GetRunningEntry() (*models.TimeEntry, error)
 	ListTags() ([]string, error)
 	DeleteEntry(id string) error
+	DeleteEntryByPrefix(prefix string) error
 	ArchiveData(archivePath string) error
 	RestoreData(archivePath string, merge bool) error
 }
@@ -80,6 +82,37 @@ func (s *JSONStorage) GetEntry(id string) (*models.TimeEntry, error) {
 	}
 
 	return nil, fmt.Errorf("entry with ID %s not found", id)
+}
+
+func (s *JSONStorage) GetEntryByPrefix(prefix string) (*models.TimeEntry, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if prefix == "" {
+		return nil, fmt.Errorf("prefix cannot be empty")
+	}
+
+	entries, err := s.loadEntries()
+	if err != nil {
+		return nil, err
+	}
+
+	var matches []*models.TimeEntry
+	for _, entry := range entries {
+		if len(entry.ID) >= len(prefix) && entry.ID[:len(prefix)] == prefix {
+			matches = append(matches, entry)
+		}
+	}
+
+	if len(matches) == 0 {
+		return nil, fmt.Errorf("no entry found with ID prefix %s", prefix)
+	}
+
+	if len(matches) > 1 {
+		return nil, fmt.Errorf("ambiguous ID prefix %s: matches %d entries", prefix, len(matches))
+	}
+
+	return matches[0], nil
 }
 
 func (s *JSONStorage) ListEntries() ([]*models.TimeEntry, error) {
@@ -180,6 +213,46 @@ func (s *JSONStorage) DeleteEntry(id string) error {
 
 	if !found {
 		return fmt.Errorf("entry with ID %s not found", id)
+	}
+
+	return s.saveEntries(newEntries)
+}
+
+func (s *JSONStorage) DeleteEntryByPrefix(prefix string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if prefix == "" {
+		return fmt.Errorf("prefix cannot be empty")
+	}
+
+	entries, err := s.loadEntries()
+	if err != nil {
+		return err
+	}
+
+	// Find matching entries
+	var matches []*models.TimeEntry
+	for _, entry := range entries {
+		if len(entry.ID) >= len(prefix) && entry.ID[:len(prefix)] == prefix {
+			matches = append(matches, entry)
+		}
+	}
+
+	if len(matches) == 0 {
+		return fmt.Errorf("no entry found with ID prefix %s", prefix)
+	}
+
+	if len(matches) > 1 {
+		return fmt.Errorf("ambiguous ID prefix %s: matches %d entries", prefix, len(matches))
+	}
+
+	// Remove the matched entry
+	newEntries := make([]*models.TimeEntry, 0, len(entries))
+	for _, entry := range entries {
+		if entry.ID != matches[0].ID {
+			newEntries = append(newEntries, entry)
+		}
 	}
 
 	return s.saveEntries(newEntries)

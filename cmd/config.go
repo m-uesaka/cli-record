@@ -40,11 +40,40 @@ var configResetCmd = &cobra.Command{
 	RunE:  runConfigReset,
 }
 
+var configSetGroupColorCmd = &cobra.Command{
+	Use:   "set-group-color <group> <color>",
+	Short: "Set color for a group",
+	Long: `Set the display color for a specific group name.
+Valid colors: black, red, green, yellow, blue, magenta, cyan, white, gray,
+             bright-red, bright-green, bright-yellow, bright-blue,
+             bright-magenta, bright-cyan, bright-white`,
+	Args: cobra.ExactArgs(2),
+	RunE: runConfigSetGroupColor,
+}
+
+var configListGroupColorsCmd = &cobra.Command{
+	Use:   "list-group-colors",
+	Short: "List all group color settings",
+	Long:  `Display all configured group colors.`,
+	RunE:  runConfigListGroupColors,
+}
+
+var configRemoveGroupColorCmd = &cobra.Command{
+	Use:   "remove-group-color <group>",
+	Short: "Remove color setting for a group",
+	Long:  `Remove the color setting for a specific group, reverting to default display.`,
+	Args:  cobra.ExactArgs(1),
+	RunE:  runConfigRemoveGroupColor,
+}
+
 func init() {
 	rootCmd.AddCommand(configCmd)
 	configCmd.AddCommand(configShowCmd)
 	configCmd.AddCommand(configSetCmd)
 	configCmd.AddCommand(configResetCmd)
+	configCmd.AddCommand(configSetGroupColorCmd)
+	configCmd.AddCommand(configListGroupColorsCmd)
+	configCmd.AddCommand(configRemoveGroupColorCmd)
 }
 
 func runConfigShow(cmd *cobra.Command, args []string) error {
@@ -175,4 +204,70 @@ This action cannot be undone.`
 
 	model := m.(tui.ConfirmModel)
 	return model.IsConfirmed(), nil
+}
+
+func runConfigSetGroupColor(cmd *cobra.Command, args []string) error {
+	group := args[0]
+	color := args[1]
+
+	cfg, err := config.Load()
+	if err != nil {
+		return fmt.Errorf("failed to load configuration: %w", err)
+	}
+
+	if err := cfg.SetGroupColor(group, color); err != nil {
+		return fmt.Errorf("failed to set group color: %w", err)
+	}
+
+	if err := cfg.Save(); err != nil {
+		return fmt.Errorf("failed to save configuration: %w", err)
+	}
+
+	fmt.Printf("✓ Group color set\n")
+	fmt.Printf("  Group: %s\n", group)
+	fmt.Printf("  Color: %s\n", color)
+
+	return nil
+}
+
+func runConfigListGroupColors(cmd *cobra.Command, args []string) error {
+	cfg, err := config.Load()
+	if err != nil {
+		return fmt.Errorf("failed to load configuration: %w", err)
+	}
+
+	if len(cfg.GroupColors) == 0 {
+		fmt.Println("No group colors configured.")
+		return nil
+	}
+
+	fmt.Println("Group Colors")
+	fmt.Println("============")
+	fmt.Println()
+
+	for group, color := range cfg.GroupColors {
+		coloredGroup := tui.Colorize(group, color)
+		fmt.Printf("  %s: %s\n", coloredGroup, color)
+	}
+
+	return nil
+}
+
+func runConfigRemoveGroupColor(cmd *cobra.Command, args []string) error {
+	group := args[0]
+
+	cfg, err := config.Load()
+	if err != nil {
+		return fmt.Errorf("failed to load configuration: %w", err)
+	}
+
+	cfg.RemoveGroupColor(group)
+
+	if err := cfg.Save(); err != nil {
+		return fmt.Errorf("failed to save configuration: %w", err)
+	}
+
+	fmt.Printf("✓ Group color removed for: %s\n", group)
+
+	return nil
 }

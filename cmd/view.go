@@ -9,8 +9,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/m-uesaka/cli-record/internal/config"
 	"github.com/m-uesaka/cli-record/internal/models"
 	"github.com/m-uesaka/cli-record/internal/storage"
+	"github.com/m-uesaka/cli-record/internal/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -255,6 +257,12 @@ func outputReport(report ViewReport) error {
 }
 
 func outputTableReport(output *os.File, report ViewReport) error {
+	// Load configuration to get group colors
+	cfg, _ := config.Load()
+	
+	// Only apply colors when outputting to terminal (stdout)
+	useColors := output == os.Stdout && cfg != nil
+	
 	fmt.Fprintln(output, report.Title)
 	fmt.Fprintln(output, strings.Repeat("=", 80))
 	fmt.Fprintf(output, "%-40s %15s %12s %10s\n", "Group", "Duration", "Entries", "Percentage")
@@ -262,8 +270,17 @@ func outputTableReport(output *os.File, report ViewReport) error {
 
 	for _, group := range report.Groups {
 		percentage := calculatePercentage(group.Duration, report.Total)
+		groupName := truncate(group.Name, 40)
+		
+		// Apply color if configured
+		if useColors {
+			if color := cfg.GetGroupColor(group.Name); color != "" {
+				groupName = tui.Colorize(groupName, color)
+			}
+		}
+		
 		fmt.Fprintf(output, "%-40s %15s %12d %9.1f%%\n",
-			truncate(group.Name, 40),
+			groupName,
 			formatDuration(group.Duration),
 			group.Count,
 			percentage)

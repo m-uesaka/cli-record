@@ -404,3 +404,209 @@ func TestConfig_Validate_EdgeCases(t *testing.T) {
 		})
 	}
 }
+
+func TestIsValidColor(t *testing.T) {
+tests := []struct {
+color string
+want  bool
+}{
+{"red", true},
+{"green", true},
+{"blue", true},
+{"bright-red", true},
+{"bright-magenta", true},
+{"invalid", false},
+{"", false},
+{"RED", false},
+}
+
+for _, tt := range tests {
+t.Run(tt.color, func(t *testing.T) {
+got := IsValidColor(tt.color)
+if got != tt.want {
+t.Errorf("IsValidColor(%q) = %v, want %v", tt.color, got, tt.want)
+}
+})
+}
+}
+
+func TestConfig_SetGroupColor(t *testing.T) {
+cfg := &Config{
+DataFilePath:     "/test/data.json",
+TimeFormat:       "24h",
+ArchiveDirectory: "/test/archives",
+GroupColors:      make(map[string]string),
+}
+
+// Test valid color
+err := cfg.SetGroupColor("work", "blue")
+if err != nil {
+t.Errorf("SetGroupColor() error = %v", err)
+}
+
+if cfg.GroupColors["work"] != "blue" {
+t.Errorf("expected work group to be blue, got %s", cfg.GroupColors["work"])
+}
+
+// Test invalid color
+err = cfg.SetGroupColor("personal", "invalid")
+if err == nil {
+t.Error("expected error for invalid color, got nil")
+}
+
+// Test nil map initialization
+cfg2 := &Config{
+DataFilePath:     "/test/data.json",
+TimeFormat:       "24h",
+ArchiveDirectory: "/test/archives",
+}
+
+err = cfg2.SetGroupColor("test", "red")
+if err != nil {
+t.Errorf("SetGroupColor() with nil map error = %v", err)
+}
+
+if cfg2.GroupColors["test"] != "red" {
+t.Error("GroupColors map should have been initialized")
+}
+}
+
+func TestConfig_GetGroupColor(t *testing.T) {
+cfg := &Config{
+GroupColors: map[string]string{
+"work":     "blue",
+"personal": "green",
+},
+}
+
+if got := cfg.GetGroupColor("work"); got != "blue" {
+t.Errorf("GetGroupColor(work) = %s, want blue", got)
+}
+
+if got := cfg.GetGroupColor("nonexistent"); got != "" {
+t.Errorf("GetGroupColor(nonexistent) = %s, want empty", got)
+}
+
+cfg2 := &Config{}
+if got := cfg2.GetGroupColor("test"); got != "" {
+t.Error("GetGroupColor() with nil map should return empty string")
+}
+}
+
+func TestConfig_RemoveGroupColor(t *testing.T) {
+cfg := &Config{
+GroupColors: map[string]string{
+"work":     "blue",
+"personal": "green",
+},
+}
+
+cfg.RemoveGroupColor("work")
+if _, exists := cfg.GroupColors["work"]; exists {
+t.Error("work group color should have been removed")
+}
+
+if cfg.GroupColors["personal"] != "green" {
+t.Error("personal group color should still exist")
+}
+
+// Test removing non-existent group
+cfg.RemoveGroupColor("nonexistent")
+
+// Test with nil map
+cfg2 := &Config{}
+cfg2.RemoveGroupColor("test") // Should not panic
+}
+
+func TestConfig_Validate_WithGroupColors(t *testing.T) {
+tests := []struct {
+name    string
+config  Config
+wantErr bool
+}{
+{
+name: "valid group colors",
+config: Config{
+DataFilePath:     "/test/data.json",
+TimeFormat:       "24h",
+ArchiveDirectory: "/test/archives",
+GroupColors: map[string]string{
+"work":     "blue",
+"personal": "green",
+},
+},
+wantErr: false,
+},
+{
+name: "invalid group color",
+config: Config{
+DataFilePath:     "/test/data.json",
+TimeFormat:       "24h",
+ArchiveDirectory: "/test/archives",
+GroupColors: map[string]string{
+"work": "invalid-color",
+},
+},
+wantErr: true,
+},
+{
+name: "empty group colors map",
+config: Config{
+DataFilePath:     "/test/data.json",
+TimeFormat:       "24h",
+ArchiveDirectory: "/test/archives",
+GroupColors:      make(map[string]string),
+},
+wantErr: false,
+},
+}
+
+for _, tt := range tests {
+t.Run(tt.name, func(t *testing.T) {
+err := tt.config.Validate()
+if (err != nil) != tt.wantErr {
+t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+}
+})
+}
+}
+
+func TestConfig_SaveAndLoad_WithGroupColors(t *testing.T) {
+tmpDir, err := os.MkdirTemp("", "cli-record-config-test-*")
+if err != nil {
+t.Fatalf("failed to create temp dir: %v", err)
+}
+defer os.RemoveAll(tmpDir)
+
+testConfigPath := filepath.Join(tmpDir, "config.toml")
+
+testCfg := &Config{
+DataFilePath:     "/custom/path/data.json",
+TimeFormat:       "12h",
+ArchiveDirectory: "/custom/archives",
+GroupColors: map[string]string{
+"work":     "blue",
+"personal": "green",
+"study":    "bright-yellow",
+},
+}
+
+if err := saveToPath(testCfg, testConfigPath); err != nil {
+t.Fatalf("saveToPath() error = %v", err)
+}
+
+loadedCfg, err := loadFromPath(testConfigPath)
+if err != nil {
+t.Fatalf("loadFromPath() error = %v", err)
+}
+
+if len(loadedCfg.GroupColors) != len(testCfg.GroupColors) {
+t.Errorf("GroupColors length = %d, want %d", len(loadedCfg.GroupColors), len(testCfg.GroupColors))
+}
+
+for group, color := range testCfg.GroupColors {
+if loadedCfg.GroupColors[group] != color {
+t.Errorf("GroupColors[%s] = %s, want %s", group, loadedCfg.GroupColors[group], color)
+}
+}
+}

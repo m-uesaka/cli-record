@@ -10,15 +10,42 @@ import (
 
 // Config represents the application configuration
 type Config struct {
-	DataFilePath     string `toml:"data_file_path"`
-	TimeFormat       string `toml:"time_format"`
-	ArchiveDirectory string `toml:"archive_directory"`
+	DataFilePath     string            `toml:"data_file_path"`
+	TimeFormat       string            `toml:"time_format"`
+	ArchiveDirectory string            `toml:"archive_directory"`
+	GroupColors      map[string]string `toml:"group_colors,omitempty"`
 }
 
 // Default configuration values
 const (
 	DefaultTimeFormat = "24h"
 )
+
+// Valid ANSI color names
+var validColors = map[string]bool{
+	"black":   true,
+	"red":     true,
+	"green":   true,
+	"yellow":  true,
+	"blue":    true,
+	"magenta": true,
+	"cyan":    true,
+	"white":   true,
+	"gray":    true,
+	"bright-red":     true,
+	"bright-green":   true,
+	"bright-yellow":  true,
+	"bright-blue":    true,
+	"bright-magenta": true,
+	"bright-cyan":    true,
+	"bright-white":   true,
+}
+
+// IsValidColor checks if a color name is valid
+func IsValidColor(color string) bool {
+	_, ok := validColors[color]
+	return ok
+}
 
 // GetDefaultConfig returns the default configuration
 func GetDefaultConfig() (*Config, error) {
@@ -31,6 +58,7 @@ func GetDefaultConfig() (*Config, error) {
 		DataFilePath:     filepath.Join(homeDir, ".cli-record", "data.json"),
 		TimeFormat:       DefaultTimeFormat,
 		ArchiveDirectory: filepath.Join(homeDir, ".cli-record", "archives"),
+		GroupColors:      make(map[string]string),
 	}, nil
 }
 
@@ -126,6 +154,13 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("archive_directory cannot be empty")
 	}
 
+	// Validate group colors
+	for group, color := range c.GroupColors {
+		if !IsValidColor(color) {
+			return fmt.Errorf("invalid color '%s' for group '%s'", color, group)
+		}
+	}
+
 	return nil
 }
 
@@ -156,6 +191,35 @@ func Reset() error {
 	}
 
 	return defaultCfg.Save()
+}
+
+// SetGroupColor sets the color for a specific group
+func (c *Config) SetGroupColor(group, color string) error {
+	if !IsValidColor(color) {
+		return fmt.Errorf("invalid color '%s'", color)
+	}
+	
+	if c.GroupColors == nil {
+		c.GroupColors = make(map[string]string)
+	}
+	
+	c.GroupColors[group] = color
+	return nil
+}
+
+// GetGroupColor returns the color for a specific group, or empty string if not set
+func (c *Config) GetGroupColor(group string) string {
+	if c.GroupColors == nil {
+		return ""
+	}
+	return c.GroupColors[group]
+}
+
+// RemoveGroupColor removes the color setting for a specific group
+func (c *Config) RemoveGroupColor(group string) {
+	if c.GroupColors != nil {
+		delete(c.GroupColors, group)
+	}
 }
 
 // Helper functions for testing

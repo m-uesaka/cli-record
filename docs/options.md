@@ -14,6 +14,8 @@ This document provides a comprehensive reference for all available commands and 
 - [list](#list)
 - [show](#show)
 - [view](#view)
+- [archive](#archive)
+- [config](#config)
 
 ## Global Options
 
@@ -744,3 +746,190 @@ All data is stored locally in JSON format at:
 3. **Stop entries promptly**: For accurate time tracking
 4. **Regular reviews**: Use `view` command weekly/monthly to analyze patterns
 5. **Export reports**: Save monthly reports for record-keeping
+
+## archive
+
+Create an archive of time entry data for a specific time range.
+
+### Usage
+
+```bash
+cli-record archive --from DATE --to DATE [--output FILENAME]
+```
+
+### Options
+
+- `--from DATE`: Start date for archive (required, format: YYYY-MM-DD or YYYY-MM-DD HH:MM:SS)
+- `--to DATE`: End date for archive (required, format: YYYY-MM-DD or YYYY-MM-DD HH:MM:SS)
+- `--output FILENAME`: Archive filename (optional, auto-generated if not specified)
+
+### Examples
+
+```bash
+# Archive data for a specific month
+cli-record archive --from 2024-01-01 --to 2024-01-31
+
+# Archive with custom filename
+cli-record archive --from 2024-01-01 --to 2024-12-31 --output 2024-full-year.json
+
+# Archive specific date range with time
+cli-record archive --from "2024-01-01 00:00:00" --to "2024-01-31 23:59:59"
+```
+
+### Notes
+
+- Archived entries are removed from the active database
+- Archives are stored in the configured archive directory (default: `~/.cli-record/archives/`)
+- Archive files can be restored or analyzed later
+- This is useful for keeping your active database manageable
+
+## config
+
+Manage application configuration including data storage, time format, and group colors.
+
+### Subcommands
+
+#### show
+
+Display current configuration values.
+
+```bash
+cli-record config show
+```
+
+Output includes:
+- Data file path
+- Time format (12h or 24h)
+- Archive directory location
+- Configured group colors
+
+#### set
+
+Set a configuration value.
+
+```bash
+cli-record config set <key> <value>
+```
+
+**Valid keys:**
+- `data-path`: Set data file location
+- `time-format`: Set time format (12h or 24h)
+- `archive-dir`: Set archive directory location
+
+**Examples:**
+
+```bash
+# Set custom data file location
+cli-record config set data-path /custom/path/data.json
+
+# Set time format to 12-hour
+cli-record config set time-format 12h
+
+# Set custom archive directory
+cli-record config set archive-dir /backups/archives
+```
+
+#### reset
+
+Reset all configuration to default values.
+
+```bash
+cli-record config reset
+```
+
+**Note:** This action requires confirmation.
+
+#### set-group-color
+
+Set a display color for a specific group name (useful when using `--by` grouping in view command).
+
+```bash
+cli-record config set-group-color <group> <color>
+```
+
+**Valid colors:**
+- Regular: `black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`, `gray`
+- Bright: `bright-red`, `bright-green`, `bright-yellow`, `bright-blue`, `bright-magenta`, `bright-cyan`, `bright-white`
+
+**Examples:**
+
+```bash
+# Set color for work-related entries
+cli-record config set-group-color work blue
+
+# Set bright color for personal projects
+cli-record config set-group-color personal bright-green
+
+# Color by tag
+cli-record config set-group-color urgent bright-red
+```
+
+**Notes:**
+- Colors are applied when viewing reports in table format on terminal
+- Colors are not applied when exporting to CSV or JSON
+- Colors are not applied when writing to a file
+- This helps visually distinguish different groups in reports
+
+#### list-group-colors
+
+Display all configured group colors with color preview.
+
+```bash
+cli-record config list-group-colors
+```
+
+#### remove-group-color
+
+Remove color setting for a specific group.
+
+```bash
+cli-record config remove-group-color <group>
+```
+
+**Example:**
+
+```bash
+cli-record config remove-group-color work
+```
+
+### Configuration File
+
+Configuration is stored at: `~/.config/cli-record/config.toml`
+
+Example configuration file:
+
+```toml
+data_file_path = "/Users/username/.cli-record/data.json"
+time_format = "24h"
+archive_directory = "/Users/username/.cli-record/archives"
+
+[group_colors]
+work = "blue"
+personal = "green"
+urgent = "bright-red"
+study = "bright-yellow"
+```
+
+### Examples
+
+```bash
+# View current configuration
+cli-record config show
+
+# Set up group colors for better visualization
+cli-record config set-group-color work blue
+cli-record config set-group-color personal green
+cli-record config set-group-color urgent bright-red
+
+# View colored report
+cli-record view --by tag
+
+# List all group colors
+cli-record config list-group-colors
+
+# Remove a color setting
+cli-record config remove-group-color work
+
+# Reset to defaults
+cli-record config reset
+```

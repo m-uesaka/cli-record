@@ -22,7 +22,7 @@ tasks:
       - mkdir -p {{.BUILD_DIR}}
       - |
         go build \
-          -ldflags "-X 'github.com/m-uesaka/cli-record/cmd.Version=0.2.0' \
+          -ldflags "-X 'github.com/m-uesaka/cli-record/cmd.Version=1.1.1' \
                     -X 'github.com/m-uesaka/cli-record/cmd.Commit=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)' \
                     -X 'github.com/m-uesaka/cli-record/cmd.BuildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ)'" \
           -o {{.BUILD_DIR}}/{{.APP_NAME}} .
@@ -77,7 +77,7 @@ tasks:
     cmds:
       - |
         go install \
-          -ldflags "-X 'github.com/m-uesaka/cli-record/cmd.Version=0.2.0' \
+          -ldflags "-X 'github.com/m-uesaka/cli-record/cmd.Version=1.1.1' \
                     -X 'github.com/m-uesaka/cli-record/cmd.Commit=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)' \
                     -X 'github.com/m-uesaka/cli-record/cmd.BuildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ)'" \
           .

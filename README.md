@@ -12,10 +12,12 @@ cli-record is a terminal-based time tracking application that helps you record a
 - 🏷️ **Tags Support**: Organize tasks with tags for better categorization
 - 📊 **Powerful Reports**: View time spent with various grouping options (task, tag, day, week, month, year)
 - ⏰ **Detailed Analytics**: Hourly, weekday, and monthly breakdowns
+- 🎨 **Colorized Output**: Assign colors to groups for better visualization in reports
 - 📁 **Export Options**: Export reports to CSV or JSON formats
 - 💾 **Data Portability**: Stores data locally in JSON format for easy sharing across machines
 - 🎨 **Interactive TUI**: Beautiful terminal user interface powered by Bubble Tea
 - 🔍 **Flexible Filtering**: Filter entries by date range, tags, and task names
+- ⚙️ **Configurable**: Customize data location, time format, and group colors
 
 ## Installation
 
@@ -207,6 +209,82 @@ cli-record view --view-by-hour --from "2025-01-01" --to "2025-01-31"
 
 # Export monthly summary
 cli-record view --by month --format json --output monthly-report.json
+```
+
+## Configuration
+
+cli-record can be configured using the `config` command. Configuration is stored in `~/.config/cli-record/config.toml`.
+
+### Basic Configuration
+
+```bash
+# View current configuration
+cli-record config show
+
+# Set time format (12h or 24h)
+cli-record config set time-format 24h
+
+# Set custom data file location
+cli-record config set data-path /custom/path/data.json
+
+# Set custom archive directory
+cli-record config set archive-dir /backups/archives
+```
+
+### Group Colors
+
+You can assign colors to groups (tasks, tags, etc.) for better visualization in reports:
+
+```bash
+# Set colors for different types of work
+cli-record config set-group-color work blue
+cli-record config set-group-color personal bright-green
+cli-record config set-group-color urgent bright-red
+cli-record config set-group-color study bright-yellow
+
+# List all configured colors
+cli-record config list-group-colors
+
+# Remove a color setting
+cli-record config remove-group-color work
+```
+
+When you run `view` commands, groups with assigned colors will be displayed in color:
+
+```bash
+# View colored report grouped by tags
+cli-record view --by tag
+
+# Colors are applied when viewing in terminal
+# (not applied when exporting to CSV/JSON or writing to file)
+```
+
+**Available Colors:**
+- Regular: `black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`, `gray`
+- Bright: `bright-red`, `bright-green`, `bright-yellow`, `bright-blue`, `bright-magenta`, `bright-cyan`, `bright-white`
+
+### Configuration File Example
+
+`~/.config/cli-record/config.toml`:
+
+```toml
+data_file_path = "/Users/username/.cli-record/data.json"
+time_format = "24h"
+archive_directory = "/Users/username/.cli-record/archives"
+
+[group_colors]
+work = "blue"
+personal = "green"
+urgent = "bright-red"
+study = "bright-yellow"
+meeting = "magenta"
+```
+
+### Reset Configuration
+
+```bash
+# Reset all settings to defaults (requires confirmation)
+cli-record config reset
 ```
 
 ## Data Storage

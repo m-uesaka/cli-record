@@ -247,6 +247,39 @@ func TestGenerateWeekdayReport(t *testing.T) {
 	}
 }
 
+func TestWeekdayReportCorrectOrder(t *testing.T) {
+	// Create entries for each day of the week
+	// Starting from Sunday, Jan 7, 2024
+	sunday := time.Date(2024, 1, 7, 10, 0, 0, 0, time.UTC)
+	entries := []*models.TimeEntry{}
+	
+	// Create one entry for each day of the week
+	for i := 0; i < 7; i++ {
+		day := sunday.AddDate(0, 0, i)
+		entries = append(entries, &models.TimeEntry{
+			ID:        fmt.Sprintf("%d", i),
+			TaskName:  "Task",
+			StartTime: day,
+			EndTime:   timePtr(day.Add(1 * time.Hour)),
+		})
+	}
+
+	report := generateWeekdayReport(entries)
+
+	// Verify the order is Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday
+	expectedOrder := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
+	
+	if len(report.Groups) != 7 {
+		t.Fatalf("expected 7 groups, got %d", len(report.Groups))
+	}
+
+	for i, expectedName := range expectedOrder {
+		if report.Groups[i].Name != expectedName {
+			t.Errorf("expected group %d to be %s, got %s", i, expectedName, report.Groups[i].Name)
+		}
+	}
+}
+
 func TestGenerateDayOfMonthReport(t *testing.T) {
 	day1 := time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC)
 	day15 := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)

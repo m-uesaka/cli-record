@@ -149,17 +149,19 @@ func generateGroupedReport(entries []*models.TimeEntry, groupBy string) ViewRepo
 }
 
 func generateHourlyReport(entries []*models.TimeEntry) ViewReport {
-	groups := initializeGroups(getHourlyKeys())
+	hourlyKeys := getHourlyKeys()
+	groups := initializeGroups(hourlyKeys)
 
 	for _, entry := range entries {
 		distributeEntryAcrossHours(groups, entry)
 	}
 
-	return createReport("Hourly Breakdown", groups)
+	return createOrderedReport("Hourly Breakdown", groups, hourlyKeys)
 }
 
 func generateWeekdayReport(entries []*models.TimeEntry) ViewReport {
-	groups := initializeGroups(getWeekdayNames())
+	weekdayNames := getWeekdayNames()
+	groups := initializeGroups(weekdayNames)
 
 	for _, entry := range entries {
 		key := getWeekdayKey(entry.StartTime.Weekday())
@@ -167,11 +169,12 @@ func generateWeekdayReport(entries []*models.TimeEntry) ViewReport {
 		groups[key].Count++
 	}
 
-	return createReport("Weekday Breakdown", groups)
+	return createOrderedReport("Weekday Breakdown", groups, weekdayNames)
 }
 
 func generateDayOfMonthReport(entries []*models.TimeEntry) ViewReport {
-	groups := initializeGroups(getDayOfMonthKeys())
+	dayKeys := getDayOfMonthKeys()
+	groups := initializeGroups(dayKeys)
 
 	for _, entry := range entries {
 		key := fmt.Sprintf("Day %02d", entry.StartTime.Day())
@@ -179,11 +182,12 @@ func generateDayOfMonthReport(entries []*models.TimeEntry) ViewReport {
 		groups[key].Count++
 	}
 
-	return createReport("Day-of-Month Breakdown", groups)
+	return createOrderedReport("Day-of-Month Breakdown", groups, dayKeys)
 }
 
 func generateMonthlyReport(entries []*models.TimeEntry) ViewReport {
-	groups := initializeGroups(getMonthNames())
+	monthNames := getMonthNames()
+	groups := initializeGroups(monthNames)
 
 	for _, entry := range entries {
 		key := getMonthKey(entry.StartTime.Month())
@@ -191,7 +195,7 @@ func generateMonthlyReport(entries []*models.TimeEntry) ViewReport {
 		groups[key].Count++
 	}
 
-	return createReport("Monthly Breakdown", groups)
+	return createOrderedReport("Monthly Breakdown", groups, monthNames)
 }
 
 func createReport(title string, groupMap map[string]*ReportGroup) ViewReport {
@@ -206,6 +210,20 @@ func createReport(title string, groupMap map[string]*ReportGroup) ViewReport {
 	sort.Slice(report.Groups, func(i, j int) bool {
 		return report.Groups[i].Name < report.Groups[j].Name
 	})
+
+	return report
+}
+
+// createOrderedReport creates a report with groups in the specified order
+func createOrderedReport(title string, groupMap map[string]*ReportGroup, order []string) ViewReport {
+	report := ViewReport{Title: title, Groups: make([]ReportGroup, 0, len(order))}
+
+	for _, name := range order {
+		if group, exists := groupMap[name]; exists {
+			report.Groups = append(report.Groups, *group)
+			report.Total += group.Duration
+		}
+	}
 
 	return report
 }
